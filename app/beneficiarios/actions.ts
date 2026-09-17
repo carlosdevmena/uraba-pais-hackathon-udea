@@ -49,8 +49,8 @@ export async function buscarCoincidenciasDifusas(
   return resultados;
 }
 
-const NOMBRE_PATTERN = /^[A-Za-zÁÉÍÓÚÑÜáéíóúñü' -]{2,100}$/;
-const DOCUMENTO_PATTERN = /^[A-Za-z0-9]{4,15}$/;
+const NOMBRE_PATTERN = /^[A-Za-zÁÉÍÓÚÑÜáéíóúñü'\-\s]{2,100}$/;
+const DOCUMENTO_PATTERN = /^[A-Za-z0-9\-]{4,15}$/;
 const TELEFONO_PATTERN = /^\+?[0-9]{7,15}$/;
 
 function parseFecha(value: FormDataEntryValue | null): Date | null {

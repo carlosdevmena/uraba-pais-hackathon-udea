@@ -42,8 +42,14 @@ export default function Footer() {
 
           <div>
             <p className="text-xs font-semibold uppercase tracking-wide text-brand-200">Aliado ejecutor</p>
-            <div className="mt-2 flex items-center gap-2 rounded-lg bg-white p-2">
-              <Image src="/fadv-logo.png" alt="Fondazione L'Albero della Vita" width={110} height={28} />
+            <div className="mt-2 inline-flex items-center rounded-lg bg-white px-3 py-2">
+              <Image
+                src="/fadv-logo.png"
+                alt="Fondazione L'Albero della Vita"
+                width={339}
+                height={94}
+                className="h-8 w-auto"
+              />
             </div>
             <div className="mt-2 flex flex-wrap gap-3">
               {REDES_FADV.map(({ href, label, icon: Icon }) => (

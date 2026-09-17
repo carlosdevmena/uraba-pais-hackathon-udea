@@ -33,7 +33,7 @@ export default function NuevoFamiliarForm({ beneficiarioId }: { beneficiarioId: 
           required
           minLength={2}
           maxLength={100}
-          pattern="[A-Za-zÁÉÍÓÚÑÜáéíóúñü' -]+"
+          pattern="[A-Za-zÁÉÍÓÚÑÜáéíóúñü'\-\s]+"
           title="Solo letras y espacios"
           className={inputClass}
         />

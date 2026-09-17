@@ -131,7 +131,7 @@ export default function NuevoBeneficiarioForm() {
             required
             minLength={2}
             maxLength={100}
-            pattern="[A-Za-zÁÉÍÓÚÑÜáéíóúñü' -]+"
+            pattern="[A-Za-zÁÉÍÓÚÑÜáéíóúñü'\-\s]+"
             title="Solo letras y espacios"
             className={inputClass}
           />
@@ -176,8 +176,8 @@ export default function NuevoBeneficiarioForm() {
           <input
             name="numeroDocumento"
             required={tieneDocumento}
-            pattern="[A-Za-z0-9]{4,15}"
-            title="Alfanumérico, entre 4 y 15 caracteres"
+            pattern="[A-Za-z0-9\-]{4,15}"
+            title="Alfanumérico, entre 4 y 15 caracteres (se permite guion)"
             className={inputClass}
           />
         </Campo>
@@ -267,7 +267,7 @@ export default function NuevoBeneficiarioForm() {
             <Campo label={`Nombre del familiar ${i + 1}`}>
               <input
                 name="familiarNombres"
-                pattern="[A-Za-zÁÉÍÓÚÑÜáéíóúñü' -]*"
+                pattern="[A-Za-zÁÉÍÓÚÑÜáéíóúñü'\-\s]*"
                 title="Solo letras y espacios"
                 className={inputClass}
               />

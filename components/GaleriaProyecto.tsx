@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import { HeartHandshake, HeartPulse, Briefcase, Users2, ChevronLeft, ChevronRight } from "lucide-react";
 import { card } from "@/components/ui";
 
@@ -9,21 +10,25 @@ const LINEAS = [
     titulo: "Asistencia humanitaria y protección",
     texto: "Apartadó, Turbo y Necoclí — ayudas y orientación frente a necesidades urgentes.",
     icon: HeartHandshake,
+    imagen: "/galeria-asistencia-humanitaria.jpeg",
   },
   {
     titulo: "Salud integral y psicosocial",
     texto: "Salud, salud mental, apoyo psicosocial y salud sexual y reproductiva.",
     icon: HeartPulse,
+    imagen: "/galeria-salud.jpeg",
   },
   {
     titulo: "Integración socioeconómica",
     texto: "Formación, empleabilidad, emprendimiento y fortalecimiento comunitario.",
     icon: Briefcase,
+    imagen: "/galeria-empleabilidad.jpeg",
   },
   {
     titulo: "Acompañamiento familiar",
     texto: "Cohesión social entre comunidades migrantes, desplazadas y de acogida.",
     icon: Users2,
+    imagen: null,
   },
 ];
 
@@ -44,25 +49,37 @@ export default function GaleriaProyecto() {
     <section className="flex flex-col gap-3">
       <div>
         <h2 className="text-sm font-semibold text-slate-900">Líneas de trabajo del proyecto</h2>
-        <p className="text-xs text-slate-500">
-          Ilustrativo — el prototipo no incluye fotografías reales del proyecto todavía.
-        </p>
+        <p className="text-xs text-slate-500">Imágenes ilustrativas de referencia.</p>
       </div>
 
-      <div className={`${card} relative overflow-hidden p-8 sm:p-10`}>
-        <div className="flex flex-col items-center gap-4 text-center">
-          <span className="flex h-16 w-16 items-center justify-center rounded-2xl bg-brand-700 text-yellow-400">
-            <Icon size={28} />
-          </span>
-          <h3 className="text-lg font-semibold text-slate-900">{activa.titulo}</h3>
-          <p className="max-w-md text-sm text-slate-500">{activa.texto}</p>
-        </div>
+      <div className={`${card} relative overflow-hidden`}>
+        {activa.imagen ? (
+          <div className="relative h-56 w-full sm:h-64">
+            <Image src={activa.imagen} alt={activa.titulo} fill className="object-cover" priority={indice === 0} />
+            <div className="absolute inset-0 bg-gradient-to-t from-brand-900/80 via-brand-900/10 to-transparent" />
+            <div className="absolute bottom-0 left-0 flex w-full flex-col gap-1 p-6 text-white">
+              <span className="mb-1 flex h-10 w-10 items-center justify-center rounded-xl bg-yellow-400 text-brand-800">
+                <Icon size={18} />
+              </span>
+              <h3 className="text-lg font-semibold">{activa.titulo}</h3>
+              <p className="max-w-md text-sm text-white/85">{activa.texto}</p>
+            </div>
+          </div>
+        ) : (
+          <div className="flex flex-col items-center gap-4 p-8 text-center sm:p-10">
+            <span className="flex h-16 w-16 items-center justify-center rounded-2xl bg-brand-700 text-yellow-400">
+              <Icon size={28} />
+            </span>
+            <h3 className="text-lg font-semibold text-slate-900">{activa.titulo}</h3>
+            <p className="max-w-md text-sm text-slate-500">{activa.texto}</p>
+          </div>
+        )}
 
         <button
           type="button"
           onClick={anterior}
           aria-label="Anterior"
-          className="absolute left-3 top-1/2 -translate-y-1/2 flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 shadow-sm hover:text-brand-700"
+          className="absolute left-3 top-1/2 -translate-y-1/2 flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white/90 text-slate-600 shadow-sm hover:text-brand-700"
         >
           <ChevronLeft size={18} />
         </button>
@@ -70,7 +87,7 @@ export default function GaleriaProyecto() {
           type="button"
           onClick={siguiente}
           aria-label="Siguiente"
-          className="absolute right-3 top-1/2 -translate-y-1/2 flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 shadow-sm hover:text-brand-700"
+          className="absolute right-3 top-1/2 -translate-y-1/2 flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white/90 text-slate-600 shadow-sm hover:text-brand-700"
         >
           <ChevronRight size={18} />
         </button>
