@@ -1,0 +1,111 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum TipoPoblacion {
+  migrante
+  refugiado
+  desplazado
+  victima_conflicto
+  comunidad_acogida
+  otro
+}
+
+enum EstadoParticipacion {
+  inscrito
+  en_proceso
+  finalizado
+  retirado
+}
+
+enum LineaTrabajo {
+  R1
+  R2
+  R3
+}
+
+model Beneficiario {
+  id                String   @id @default(cuid())
+  codigoInterno     String   @unique
+  nombres           String
+  tipoDocumento     String?
+  numeroDocumento   String?
+  fechaNacimiento   DateTime?
+  genero            String?
+  municipio         String?
+  telefono          String?
+  tipoPoblacion     TipoPoblacion @default(otro)
+  discapacidad      Boolean  @default(false)
+  autorizacionDatos Boolean  @default(false)
+  fechaAutorizacion DateTime?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  familiares     FamiliarIntegrante[]
+  participaciones Participacion[]
+  atenciones     Atencion[]
+  seguimientos   Seguimiento[]
+
+  @@unique([tipoDocumento, numeroDocumento])
+}
+
+model FamiliarIntegrante {
+  id              String   @id @default(cuid())
+  beneficiarioId  String
+  beneficiario    Beneficiario @relation(fields: [beneficiarioId], references: [id], onDelete: Cascade)
+  nombres         String
+  parentesco      String
+  fechaNacimiento DateTime?
+  createdAt       DateTime @default(now())
+}
+
+model Programa {
+  id           String       @id @default(cuid())
+  nombre       String
+  lineaTrabajo LineaTrabajo
+  createdAt    DateTime     @default(now())
+
+  participaciones Participacion[]
+}
+
+model Participacion {
+  id               String              @id @default(cuid())
+  beneficiarioId   String
+  beneficiario     Beneficiario        @relation(fields: [beneficiarioId], references: [id], onDelete: Cascade)
+  programaId       String
+  programa         Programa            @relation(fields: [programaId], references: [id])
+  fechaVinculacion DateTime            @default(now())
+  estado           EstadoParticipacion @default(inscrito)
+  createdAt        DateTime            @default(now())
+}
+
+model Atencion {
+  id             String   @id @default(cuid())
+  beneficiarioId String
+  beneficiario   Beneficiario @relation(fields: [beneficiarioId], references: [id], onDelete: Cascade)
+  tipo           String
+  fecha          DateTime @default(now())
+  descripcion    String
+  responsable    String
+  resultado      String
+  remision       String?
+  createdAt      DateTime @default(now())
+}
+
+model Seguimiento {
+  id              String    @id @default(cuid())
+  beneficiarioId  String
+  beneficiario    Beneficiario @relation(fields: [beneficiarioId], references: [id], onDelete: Cascade)
+  fecha           DateTime  @default(now())
+  avanceNovedad   String
+  observacion     String?
+  accionPendiente String?
+  proximoContacto DateTime?
+  createdAt       DateTime  @default(now())
+}
