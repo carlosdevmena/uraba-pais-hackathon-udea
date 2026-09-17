@@ -35,11 +35,14 @@ Flujo que implementa: **Registro → Vinculación → Atención o ayuda → Segu
    npm run db:push
    ```
 
-4. Sembrar datos ficticios de demostración (programas + beneficiarios de ejemplo):
+4. Importar los 100 beneficiarios ficticios de referencia del proyecto (`prisma/data/Base_Beneficiarios_HackathonTest.xlsx`) y los 3 programas por línea de trabajo:
 
    ```bash
    npm run db:seed
    ```
+
+   Esto ejecuta `prisma/import-excel.mjs`, que limpia los datos existentes y vuelve a
+   importar el archivo completo.
 
 5. Levantar el servidor de desarrollo:
 
@@ -66,7 +69,8 @@ lib/
   prisma.ts                    Cliente Prisma singleton
 prisma/
   schema.prisma                Modelo de datos
-  seed.ts                      Datos ficticios de demostración
+  import-excel.mjs             Importa los 100 beneficiarios ficticios de referencia
+  data/                        Excel fuente de los datos ficticios
 ```
 
 ## Módulos obligatorios cubiertos

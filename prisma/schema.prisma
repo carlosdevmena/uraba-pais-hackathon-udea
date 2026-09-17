@@ -1,5 +1,6 @@
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
+  previewFeatures = ["relationJoins"]
 }
 
 datasource db {
@@ -12,6 +13,7 @@ enum TipoPoblacion {
   migrante
   refugiado
   desplazado
+  retornado
   victima_conflicto
   comunidad_acogida
   otro
@@ -37,11 +39,15 @@ model Beneficiario {
   tipoDocumento     String?
   numeroDocumento   String?
   fechaNacimiento   DateTime?
+  edadAproximada    Int?
   genero            String?
   municipio         String?
+  zona              String?
+  nacionalidad      String?
   telefono          String?
   tipoPoblacion     TipoPoblacion @default(otro)
   discapacidad      Boolean  @default(false)
+  tipoDiscapacidad  String?
   autorizacionDatos Boolean  @default(false)
   fechaAutorizacion DateTime?
   createdAt         DateTime @default(now())
@@ -74,6 +80,10 @@ model Programa {
   participaciones Participacion[]
 }
 
+// Nota: además de la validación en la app, existe un índice único parcial
+// creado con SQL crudo (no representable en este schema) que impide dos
+// participaciones activas (estado IN inscrito, en_proceso) del mismo
+// beneficiario en el mismo programa. Ver prisma/sql/participacion_activa_unica.sql
 model Participacion {
   id               String              @id @default(cuid())
   beneficiarioId   String

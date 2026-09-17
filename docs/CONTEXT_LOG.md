@@ -1,0 +1,42 @@
+# Contexto del proyecto (para IA externa)
+
+**Proyecto**: URABÁ-PAÍS · sistema de gestión de beneficiarios (Hackathon, COOPI/FADV/HIAS/HI). Next.js (App Router, TypeScript) + Server Actions + Prisma + PostgreSQL (Supabase). Sin API REST separada, sin autenticación (deprioritizada por decisión explícita). Flujo: Registro → Vinculación → Atención → Seguimiento → Reporte.
+
+Estructura clave: `prisma/schema.prisma` (modelo de datos), `app/beneficiarios/actions.ts` (todas las mutaciones como Server Actions), `app/beneficiarios/**` (páginas), `app/reportes/page.tsx`, `components/ui.tsx` (estilos/componentes compartidos), `components/NavBar.tsx`.
+
+**Regla de oro del proyecto**: la ficha de beneficiario (`app/beneficiarios/[id]/page.tsx`) es de **solo lectura**; toda escritura vive en páginas dedicadas bajo `.../[id]/<recurso>/nuevo` (patrón ya establecido, seguirlo para cualquier acción nueva).
+
+---
+
+## Changelog (más reciente primero)
+
+- **Rediseño institucional** (adaptado desde otra spec externa, ajustada a decisiones reales del usuario y a la regla "no PII en reportes"): paleta cambiada de azul pastel a **verde institucional `#1B3635` (`brand-*`, definido en `app/globals.css`), naranja (alertas/acción, antes "amber") y amarillo (éxito/destacado, antes "emerald")** — remapeo centralizado en `components/ui.tsx` (`badgeTones`) más sed dirigido en 9 archivos, sin renombrar las props `tone="blue"|"emerald"|"amber"` para no tocar cada call site. Nuevo `components/Footer.tsx` (fondo verde, COOPI con link a `coopi.org` dado por el usuario, aliados FADV/HIAS/HI/AICS solo por nombre — **sin inventar URLs de redes sociales de organizaciones reales**). Nuevo `components/GaleriaProyecto.tsx` con tarjetas ilustrativas por ícono (sin fotos reales, no las hay). Nav: "Beneficiarios" renombrado a "Consultar" (se mantuvo el enlace, no se eliminó — el usuario lo pidió así para no perder acceso al Módulo 1). Pipeline de la home sin números, como badges conectados con flechas (`app/page.tsx`). Nueva sección "Auditoría y consolidación de datos" en `/reportes` con métricas y tabla de fichas con múltiples eventos — **usa cifras reales de la base** (no el "100 filas crudas" que pedía el documento original y que no corresponde a ningún dato real del sistema; verificado varias veces que no existe tal dataset). Validado con `npm test` (8/8), `tsc --noEmit`, `eslint` y `npm run build`, todos limpios.
+
+- **Búsqueda difusa de nombres (trigramas)**: adaptado desde una spec externa pensada para NestJS/TypeORM a nuestro stack real (Next.js + Prisma + Postgres). Extensión `pg_trgm` + índice GIN sobre `Beneficiario.nombres` (`prisma/sql/busqueda_difusa_trigramas.sql`, aplicado con `prisma db execute`). Nueva función pura `lib/trigram.ts` (normalización, generación de trigramas con padding `__`/`_`, similitud de Sørensen-Dice) con pruebas unitarias en `lib/trigram.test.ts` (Vitest, `npm test`; 8/8 pasan). Nueva acción `buscarCoincidenciasDifusas` en `actions.ts` que usa `similarity()` de `pg_trgm` (no la función JS) para la búsqueda real contra la DB. Integrada en `crearBeneficiario`: **solo cuando no se registra documento**, si hay nombres similares (umbral 0.4) se muestran como advertencia no bloqueante en `NuevoBeneficiarioForm.tsx` con checkbox de confirmación explícita ("es una persona diferente") antes de permitir continuar — cumple el criterio de la guía oficial de dejar la decisión final a una persona autorizada. Medido contra Supabase real: ~700ms por consulta (igual que cualquier otra query en este entorno, es latencia de red, no del algoritmo); no se sembraron 30k filas sintéticas en la base real para no contaminar los datos de la demo.
+
+- **Márgenes de layout**: `app/layout.tsx` y `components/NavBar.tsx` — contenedor ampliado a `max-w-7xl` con padding progresivo (`px-4 sm:px-8 lg:px-12 xl:px-16`) para verse mejor en zoom out/in.
+
+- **Tabla `/beneficiarios` (`app/beneficiarios/page.tsx`)**: agregada paginación (20/página, `?page=`), columna "Seguimiento" (badge ámbar "N pendiente(s)" / verde "Al día", vía `_count` filtrado de Prisma), columnas de fecha de nacimiento/género/teléfono/autorización, contador total de beneficiarios en el encabezado.
+
+- **Gestión de participaciones** (`app/beneficiarios/actions.ts`, nueva página `app/beneficiarios/[id]/programas/[participacionId]/editar/`):
+  - Nueva acción `actualizarEstadoParticipacion` (transiciones libres, sin máquina de estados estricta).
+  - `vincularPrograma` ahora bloquea una segunda vinculación **activa** (inscrito/en_proceso) al mismo programa y ofrece un enlace directo para editar la existente.
+  - Refuerzo a nivel de base de datos: índice único parcial en Postgres `participacion_activa_unica` sobre `("beneficiarioId","programaId") WHERE estado IN (inscrito, en_proceso)` — ver `prisma/sql/participacion_activa_unica.sql` (aplicado con `prisma db execute`, no representable en `schema.prisma`).
+  - Enlace "Editar estado" agregado en la tabla de participaciones de la ficha.
+
+- **Formulario de registro** (`app/beneficiarios/nuevo/NuevoBeneficiarioForm.tsx`, validaciones espejo en `actions.ts`):
+  - Documento (tipo+número) se mantiene **opcional** (requisito explícito de la guía oficial: personas sin papeles).
+  - Ahora son **obligatorios**: municipio, género (incluye "Prefiere no decir" como opción explícita, ya no un vacío por defecto), tipo de población (ya no cae en "otro" silencioso), y al menos uno de fecha de nacimiento **o** edad aproximada (campo nuevo `edadAproximada` en el schema).
+  - Discapacidad: al marcar el checkbox aparece un campo `tipoDiscapacidad` con `<datalist>` (elegir de una lista o escribir libremente), obligatorio si se marca.
+  - Validaciones por tipo de dato: nombres (regex solo letras/espacios), documento (alfanumérico 4-15), teléfono (7-15 dígitos), fechas (no futuras, edad máx. 120 años).
+
+- **Rendimiento**: `app/beneficiarios/[id]/page.tsx` usa `relationLoadStrategy: "join"` en Prisma (1 round-trip en vez de 5). `.env` agrega `connection_limit=12` al `DATABASE_URL`. Causa raíz identificada: ~700ms de latencia de red por consulta hacia Supabase (región `sa-east-1`) desde este entorno de desarrollo local — se espera mucho mejor en producción (Vercel).
+
+- **Reportes** (`app/reportes/page.tsx`): agregado dashboard con filtros combinables (municipio, tipo de población, programa, rango de fechas de registro) vía `searchParams`, todos acotando el mismo conjunto de beneficiarios de forma consistente. Nuevo indicador "Beneficiarios por municipio".
+
+- **Ficha de beneficiario convertida a solo lectura**: se eliminaron los `<form>` inline; las acciones (agregar familiar, vincular programa, registrar atención, añadir seguimiento) se movieron a páginas dedicadas bajo `.../[id]/<recurso>/nuevo`, cada una con su propio componente cliente (`useActionState`) y mensajes de error.
+
+- **Rediseño visual**: paleta blanco + azul pastel con Tailwind (sin librería de diseño externa), iconos con `lucide-react`, componentes compartidos en `components/ui.tsx` (`card`, `Badge`, `SectionCard`, `FormPageHeader`, clases de botones/inputs).
+
+- **Base**: scaffold Next.js 16 + TypeScript + Tailwind v4, Prisma 6.19.3 (fijado; `prisma@latest` resuelve a una release candidate 8.x con breaking changes, evitado a propósito) + PostgreSQL vía Supabase. Modelo de datos: `Beneficiario`, `FamiliarIntegrante`, `Programa`, `Participacion`, `Atencion`, `Seguimiento`. Anti-duplicados: `@@unique([tipoDocumento, numeroDocumento])` (los NULL no colisionan entre sí en Postgres). Seed con 14 beneficiarios ficticios (`prisma/seed.ts`).
+  

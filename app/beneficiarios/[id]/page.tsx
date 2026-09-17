@@ -1,13 +1,8 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ShieldCheck, ShieldAlert, Users, Link2, HeartHandshake, ClipboardList } from "lucide-react";
+import { ShieldCheck, ShieldAlert, Users, Link2, HeartHandshake, ClipboardList, Plus } from "lucide-react";
 import { prisma } from "@/lib/prisma";
-import {
-  agregarFamiliar,
-  registrarAtencion,
-  registrarSeguimiento,
-  vincularPrograma,
-} from "../actions";
-import { Badge, EmptyState, SectionCard, buttonSecondary, card, inputClass } from "@/components/ui";
+import { Badge, EmptyState, SectionCard, buttonGhost, card } from "@/components/ui";
 
 export const dynamic = "force-dynamic";
 
@@ -15,6 +10,7 @@ const ETIQUETAS_POBLACION: Record<string, string> = {
   migrante: "Migrante",
   refugiado: "Refugiado",
   desplazado: "Desplazado",
+  retornado: "Retornado",
   victima_conflicto: "Víctima del conflicto",
   comunidad_acogida: "Comunidad de acogida",
   otro: "Otro",
@@ -32,6 +28,15 @@ function formatearFecha(fecha: Date | null) {
   return new Intl.DateTimeFormat("es-CO", { dateStyle: "medium" }).format(fecha);
 }
 
+function AgregarLink({ href, children }: { href: string; children: React.ReactNode }) {
+  return (
+    <Link href={href} className={buttonGhost}>
+      <Plus size={14} />
+      {children}
+    </Link>
+  );
+}
+
 export default async function FichaBeneficiarioPage({
   params,
 }: {
@@ -39,27 +44,30 @@ export default async function FichaBeneficiarioPage({
 }) {
   const { id } = await params;
 
-  const [beneficiario, programas] = await Promise.all([
-    prisma.beneficiario.findUnique({
-      where: { id },
-      include: {
-        familiares: { orderBy: { createdAt: "asc" } },
-        participaciones: { include: { programa: true }, orderBy: { fechaVinculacion: "desc" } },
-        atenciones: { orderBy: { fecha: "desc" } },
-        seguimientos: { orderBy: { fecha: "desc" } },
-      },
-    }),
-    prisma.programa.findMany({ orderBy: { nombre: "asc" } }),
-  ]);
+  const beneficiario = await prisma.beneficiario.findUnique({
+    where: { id },
+    include: {
+      familiares: { orderBy: { createdAt: "asc" } },
+      participaciones: { include: { programa: true }, orderBy: { fechaVinculacion: "desc" } },
+      atenciones: { orderBy: { fecha: "desc" } },
+      seguimientos: { orderBy: { fecha: "desc" } },
+    },
+    relationLoadStrategy: "join",
+  });
 
   if (!beneficiario) notFound();
 
   return (
     <div className="flex flex-col gap-6">
+      <p className="text-xs text-slate-400">
+        Vista de solo consulta. Usa los enlaces &quot;+ Agregar&quot; de cada sección para registrar información
+        nueva.
+      </p>
+
       <section className={`${card} p-5 sm:p-6`}>
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <p className="font-mono text-xs text-blue-600">{beneficiario.codigoInterno}</p>
+            <p className="font-mono text-xs text-brand-700">{beneficiario.codigoInterno}</p>
             <h1 className="text-xl font-semibold text-slate-900">{beneficiario.nombres}</h1>
           </div>
           {beneficiario.autorizacionDatos ? (
@@ -103,7 +111,7 @@ export default async function FichaBeneficiarioPage({
               <Badge tone="blue">{ETIQUETAS_POBLACION[beneficiario.tipoPoblacion] ?? beneficiario.tipoPoblacion}</Badge>
               {beneficiario.discapacidad && (
                 <span className="ml-2">
-                  <Badge tone="slate">Con discapacidad</Badge>
+                  <Badge tone="slate">Discapacidad: {beneficiario.tipoDiscapacidad ?? "no especificada"}</Badge>
                 </span>
               )}
             </dd>
@@ -111,11 +119,15 @@ export default async function FichaBeneficiarioPage({
         </dl>
       </section>
 
-      <SectionCard title="Núcleo familiar" icon={<Users size={16} />}>
+      <SectionCard
+        title="Núcleo familiar"
+        icon={<Users size={16} />}
+        action={<AgregarLink href={`/beneficiarios/${beneficiario.id}/familiares/nuevo`}>Agregar familiar</AgregarLink>}
+      >
         <ul className="flex flex-col gap-1 text-sm text-slate-700">
           {beneficiario.familiares.map((f) => (
             <li key={f.id} className="flex items-center gap-2">
-              <span className="h-1.5 w-1.5 rounded-full bg-blue-300" />
+              <span className="h-1.5 w-1.5 rounded-full bg-brand-300" />
               {f.nombres} <span className="text-slate-400">· {f.parentesco}</span>
             </li>
           ))}
@@ -123,18 +135,13 @@ export default async function FichaBeneficiarioPage({
         {beneficiario.familiares.length === 0 && (
           <EmptyState>Sin integrantes familiares registrados.</EmptyState>
         )}
-        <form action={agregarFamiliar} className="mt-4 grid grid-cols-1 gap-2 sm:flex sm:flex-wrap sm:items-end">
-          <input type="hidden" name="beneficiarioId" value={beneficiario.id} />
-          <input name="nombres" placeholder="Nombre del familiar" required className={`${inputClass} sm:w-48`} />
-          <input name="parentesco" placeholder="Parentesco" className={`${inputClass} sm:w-40`} />
-          <input type="date" name="fechaNacimiento" className={`${inputClass} sm:w-auto`} />
-          <button type="submit" className={`${buttonSecondary} sm:w-fit`}>
-            Agregar familiar
-          </button>
-        </form>
       </SectionCard>
 
-      <SectionCard title="Programas y participación" icon={<Link2 size={16} />}>
+      <SectionCard
+        title="Programas y participación"
+        icon={<Link2 size={16} />}
+        action={<AgregarLink href={`/beneficiarios/${beneficiario.id}/programas/nuevo`}>Vincular programa</AgregarLink>}
+      >
         <div className="overflow-x-auto">
           <table className="w-full min-w-[480px] text-sm">
             <thead className="text-left text-xs uppercase tracking-wide text-slate-400">
@@ -142,6 +149,7 @@ export default async function FichaBeneficiarioPage({
                 <th className="py-2 pr-4">Programa</th>
                 <th className="py-2 pr-4">Fecha</th>
                 <th className="py-2 pr-4">Estado</th>
+                <th className="py-2 pr-4"></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -150,9 +158,27 @@ export default async function FichaBeneficiarioPage({
                   <td className="py-2 pr-4 text-slate-800">{p.programa.nombre}</td>
                   <td className="py-2 pr-4 text-slate-500">{formatearFecha(p.fechaVinculacion)}</td>
                   <td className="py-2 pr-4">
-                    <Badge tone={p.estado === "finalizado" ? "emerald" : p.estado === "retirado" ? "slate" : "blue"}>
+                    <Badge
+                      tone={
+                        p.estado === "finalizado"
+                          ? "emerald"
+                          : p.estado === "en_proceso"
+                            ? "amber"
+                            : p.estado === "retirado"
+                              ? "rose"
+                              : "sky"
+                      }
+                    >
                       {ETIQUETAS_ESTADO[p.estado]}
                     </Badge>
+                  </td>
+                  <td className="py-2 pr-4 text-right">
+                    <Link
+                      href={`/beneficiarios/${beneficiario.id}/programas/${p.id}/editar`}
+                      className={buttonGhost}
+                    >
+                      Editar estado
+                    </Link>
                   </td>
                 </tr>
               ))}
@@ -160,36 +186,16 @@ export default async function FichaBeneficiarioPage({
           </table>
         </div>
         {beneficiario.participaciones.length === 0 && <EmptyState>Sin programas vinculados.</EmptyState>}
-        <form action={vincularPrograma} className="mt-4 grid grid-cols-1 gap-2 sm:flex sm:flex-wrap sm:items-end">
-          <input type="hidden" name="beneficiarioId" value={beneficiario.id} />
-          <select name="programaId" required defaultValue="" className={`${inputClass} sm:w-56`}>
-            <option value="" disabled>
-              Seleccionar programa...
-            </option>
-            {programas.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.nombre}
-              </option>
-            ))}
-          </select>
-          <input type="date" name="fechaVinculacion" className={`${inputClass} sm:w-auto`} />
-          <select name="estado" defaultValue="inscrito" className={`${inputClass} sm:w-36`}>
-            {Object.entries(ETIQUETAS_ESTADO).map(([value, label]) => (
-              <option key={value} value={value}>
-                {label}
-              </option>
-            ))}
-          </select>
-          <button type="submit" className={`${buttonSecondary} sm:w-fit`}>
-            Vincular a programa
-          </button>
-        </form>
       </SectionCard>
 
-      <SectionCard title="Atenciones y ayudas" icon={<HeartHandshake size={16} />}>
+      <SectionCard
+        title="Atenciones y ayudas"
+        icon={<HeartHandshake size={16} />}
+        action={<AgregarLink href={`/beneficiarios/${beneficiario.id}/atenciones/nueva`}>Registrar atención</AgregarLink>}
+      >
         <div className="flex flex-col gap-3">
           {beneficiario.atenciones.map((a) => (
-            <div key={a.id} className="rounded-lg border-2 border-blue-300 bg-blue-50/50 p-3 text-sm">
+            <div key={a.id} className="rounded-lg border-2 border-brand-300 bg-brand-50/50 p-3 text-sm">
               <div className="flex flex-wrap justify-between gap-2 text-slate-500">
                 <span className="font-medium text-slate-800">{a.tipo}</span>
                 <span>{formatearFecha(a.fecha)}</span>
@@ -203,64 +209,60 @@ export default async function FichaBeneficiarioPage({
           ))}
         </div>
         {beneficiario.atenciones.length === 0 && <EmptyState>Sin atenciones registradas.</EmptyState>}
-        <form action={registrarAtencion} className="mt-4 grid gap-2 sm:grid-cols-2">
-          <input type="hidden" name="beneficiarioId" value={beneficiario.id} />
-          <input name="tipo" placeholder="Tipo (ej. ayuda humanitaria)" required className={inputClass} />
-          <input type="date" name="fecha" className={inputClass} />
-          <input
-            name="descripcion"
-            placeholder="Descripción breve"
-            required
-            className={`${inputClass} sm:col-span-2`}
-          />
-          <input name="responsable" placeholder="Responsable o entidad" required className={inputClass} />
-          <input name="resultado" placeholder="Resultado" required className={inputClass} />
-          <input name="remision" placeholder="Remisión (opcional)" className={inputClass} />
-          <button type="submit" className={`${buttonSecondary} sm:col-span-2 sm:w-fit`}>
-            Registrar atención
-          </button>
-        </form>
       </SectionCard>
 
-      <SectionCard title="Seguimientos" icon={<ClipboardList size={16} />}>
+      <SectionCard
+        title="Seguimientos"
+        icon={<ClipboardList size={16} />}
+        action={<AgregarLink href={`/beneficiarios/${beneficiario.id}/seguimientos/nuevo`}>Añadir seguimiento</AgregarLink>}
+      >
+        {beneficiario.seguimientos.length > 0 && (
+          <p className="-mt-1 mb-3 text-xs text-slate-500">
+            {beneficiario.seguimientos.length} seguimiento{beneficiario.seguimientos.length === 1 ? "" : "s"}{" "}
+            registrado{beneficiario.seguimientos.length === 1 ? "" : "s"} ·{" "}
+            <span className="font-medium text-orange-700">
+              {beneficiario.seguimientos.filter((s) => s.accionPendiente).length} con acción pendiente
+            </span>
+          </p>
+        )}
         <div className="flex flex-col gap-3">
           {beneficiario.seguimientos.map((s) => (
-            <div key={s.id} className="rounded-lg border-2 border-blue-300 bg-blue-50/50 p-3 text-sm">
-              <div className="flex flex-wrap justify-between gap-2 text-slate-500">
-                <span className="font-medium text-slate-800">{s.avanceNovedad}</span>
-                <span>{formatearFecha(s.fecha)}</span>
-              </div>
-              {s.observacion && <p className="mt-1 text-slate-700">{s.observacion}</p>}
-              <p className="mt-1 text-xs text-slate-500">
+            <div key={s.id} className="rounded-lg border-2 border-brand-300 bg-brand-50/50 p-4 text-sm">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <span className="text-xs font-semibold uppercase tracking-wide text-brand-800">
+                  {formatearFecha(s.fecha)}
+                </span>
                 {s.accionPendiente ? (
-                  <Badge tone="amber">
-                    Pendiente: {s.accionPendiente}
-                    {s.proximoContacto ? ` · Próximo contacto: ${formatearFecha(s.proximoContacto)}` : ""}
-                  </Badge>
+                  <Badge tone="amber">Acción pendiente</Badge>
                 ) : (
-                  <Badge tone="emerald">Sin acciones pendientes</Badge>
+                  <Badge tone="emerald">Sin pendientes</Badge>
                 )}
-              </p>
+              </div>
+              <p className="mt-2 font-medium text-slate-900">{s.avanceNovedad}</p>
+              {s.observacion && (
+                <p className="mt-1 text-slate-600">
+                  <span className="font-semibold text-slate-700">Observación: </span>
+                  {s.observacion}
+                </p>
+              )}
+              {s.accionPendiente && (
+                <div className="mt-2 rounded-md bg-orange-100/70 px-3 py-2 text-orange-900">
+                  <p>
+                    <span className="font-semibold">Acción pendiente: </span>
+                    {s.accionPendiente}
+                  </p>
+                  {s.proximoContacto && (
+                    <p className="mt-0.5">
+                      <span className="font-semibold">Próximo contacto: </span>
+                      {formatearFecha(s.proximoContacto)}
+                    </p>
+                  )}
+                </div>
+              )}
             </div>
           ))}
         </div>
         {beneficiario.seguimientos.length === 0 && <EmptyState>Sin seguimientos registrados.</EmptyState>}
-        <form action={registrarSeguimiento} className="mt-4 grid gap-2 sm:grid-cols-2">
-          <input type="hidden" name="beneficiarioId" value={beneficiario.id} />
-          <input
-            name="avanceNovedad"
-            placeholder="Avance o novedad"
-            required
-            className={`${inputClass} sm:col-span-2`}
-          />
-          <input type="date" name="fecha" className={inputClass} />
-          <input name="observacion" placeholder="Observación (opcional)" className={inputClass} />
-          <input name="accionPendiente" placeholder="Acción pendiente (opcional)" className={inputClass} />
-          <input type="date" name="proximoContacto" className={inputClass} />
-          <button type="submit" className={`${buttonSecondary} sm:col-span-2 sm:w-fit`}>
-            Añadir seguimiento
-          </button>
-        </form>
       </SectionCard>
     </div>
   );

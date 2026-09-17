@@ -8,7 +8,7 @@ export default function NuevoBeneficiarioPage() {
         <h1 className="text-xl font-semibold text-slate-900">Registrar beneficiario</h1>
         <p className="mt-1 text-sm text-slate-500">
           Antes de crear un registro nuevo, verifica primero en{" "}
-          <Link href="/beneficiarios" className="text-blue-700 underline">
+          <Link href="/beneficiarios" className="text-brand-800 underline">
             Beneficiarios
           </Link>{" "}
           si la persona ya existe. Si el tipo y número de documento coinciden con un
