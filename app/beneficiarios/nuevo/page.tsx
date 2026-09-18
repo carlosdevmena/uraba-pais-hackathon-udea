@@ -5,10 +5,10 @@ export default function NuevoBeneficiarioPage() {
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h1 className="text-xl font-semibold text-slate-900">Registrar beneficiario</h1>
-        <p className="mt-1 text-sm text-slate-500">
+        <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">Registrar beneficiario</h1>
+        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
           Antes de crear un registro nuevo, verifica primero en{" "}
-          <Link href="/beneficiarios" className="text-brand-800 underline">
+          <Link href="/beneficiarios" className="text-brand-800 underline dark:text-brand-300">
             Beneficiarios
           </Link>{" "}
           si la persona ya existe. Si el tipo y número de documento coinciden con un

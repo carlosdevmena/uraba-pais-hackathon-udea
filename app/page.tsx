@@ -4,6 +4,7 @@ import { UserPlus, Search, LogIn } from "lucide-react";
 import { buttonPrimary, buttonSecondary, card } from "@/components/ui";
 import GaleriaProyecto from "@/components/GaleriaProyecto";
 import FlujoCiclo from "@/components/FlujoCiclo";
+import Reveal from "@/components/Reveal";
 import { obtenerRolActivo } from "@/app/login/actions";
 
 export default async function Home() {
@@ -47,7 +48,7 @@ export default async function Home() {
               </div>
             )}
           </div>
-          <div className="relative hidden h-56 w-72 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-gradient-to-br from-mint-50 to-brand-50 shadow-lg ring-4 ring-white lg:flex">
+          <div className="relative hidden h-56 w-72 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-gradient-to-br from-mint-50 to-brand-50 shadow-lg ring-4 ring-white transition-transform duration-300 hover:scale-[1.02] lg:flex dark:ring-slate-800">
             <Image
               src="/hero-ilustracion.jpeg"
               alt="Ilustración de gestión y seguimiento de beneficiarios"
@@ -59,20 +60,24 @@ export default async function Home() {
         </div>
       </section>
 
-      <section className={`${card} flex flex-col items-center gap-4 p-5 sm:p-6 lg:flex-row lg:items-center lg:justify-center lg:gap-10`}>
-        <div className="self-start lg:self-center">
-          <p className="text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">
-            Flujo del sistema
-          </p>
-          <p className="mt-1 max-w-xs text-sm text-slate-500 dark:text-slate-400">
-            Un ciclo continuo: cada beneficiario pasa por registro, vinculación, atención y
-            seguimiento — y vuelve a empezar en cada nuevo servicio.
-          </p>
-        </div>
-        <FlujoCiclo />
-      </section>
+      <Reveal>
+        <GaleriaProyecto />
+      </Reveal>
 
-      <GaleriaProyecto />
+      <Reveal retraso={100}>
+        <section className={`${card} flex flex-col items-center gap-4 p-5 sm:p-6 lg:flex-row lg:items-center lg:justify-center lg:gap-10`}>
+          <div className="self-start lg:self-center">
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">
+              Flujo del sistema
+            </p>
+            <p className="mt-1 max-w-xs text-sm text-slate-500 dark:text-slate-400">
+              Un ciclo continuo: cada beneficiario pasa por registro, vinculación, atención y
+              seguimiento — y vuelve a empezar en cada nuevo servicio.
+            </p>
+          </div>
+          <FlujoCiclo />
+        </section>
+      </Reveal>
     </div>
   );
 }

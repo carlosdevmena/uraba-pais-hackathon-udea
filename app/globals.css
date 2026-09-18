@@ -6,8 +6,8 @@
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 
-  /* Header ámbar translúcido/desenfocado (mismo tono en claro y oscuro). */
-  --color-header: #c88e08;
+  /* Header: blanco desenfocado, apenas distinto del blanco puro de las tarjetas. */
+  --color-header: #f5f8f8;
 
   /* Paleta humanitaria URABÁ-PAÍS: Protección y Salud.
      Primario = Teal Humanitario #0F4C5C (fondos oscuros, botones principales). */
@@ -42,15 +42,11 @@
   --color-accent-600: #b8580a;
 }
 
-body {
-  /* El color/degradado de fondo real lo ponen las clases de Tailwind en
-     app/layout.tsx (bg-gradient-to-b ... dark:from-*). Una declaración
-     `background` aquí (shorthand) anularía backgroundImage porque las
-     utilidades de Tailwind viven en una @layer de menor prioridad que
-     el CSS sin capa — por eso este selector solo toca lo que no compite
-     con esas utilidades. */
-  font-family: Arial, Helvetica, sans-serif;
-}
+/* El fondo (degradado) y la tipografía (Geist, vía `font-sans`) del body
+   se controlan con clases de Tailwind en app/layout.tsx — a propósito no
+   hay un selector `body {}` con `background`/`font-family` aquí: esas
+   declaraciones sin capa (`@layer`) ganan por encima de CUALQUIER utilidad
+   de Tailwind sin importar especificidad, y silenciosamente las anulaban. */
 
 @keyframes fadeInPage {
   from {

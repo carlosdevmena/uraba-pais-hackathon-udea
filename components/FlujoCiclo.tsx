@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { UserPlus, Link2, HeartHandshake, ClipboardCheck } from "lucide-react";
+import { UserPlus, Link2, HeartHandshake, ClipboardCheck, ChevronRight } from "lucide-react";
 
 const RADIO = 104;
 
@@ -18,6 +18,18 @@ const PASOS = [
 function posicion(indice: number, total: number) {
   const angulo = (indice / total) * 2 * Math.PI - Math.PI / 2;
   return { x: Math.cos(angulo) * RADIO, y: Math.sin(angulo) * RADIO };
+}
+
+// Flechitas a mitad de camino entre cada paso, apuntando en la dirección del
+// recorrido (sentido horario) para que se note para dónde va el ciclo.
+function posicionFlecha(indice: number, total: number) {
+  const angulo = ((indice + 0.5) / total) * 2 * Math.PI - Math.PI / 2;
+  const x = Math.cos(angulo) * RADIO;
+  const y = Math.sin(angulo) * RADIO;
+  const dx = -Math.sin(angulo);
+  const dy = Math.cos(angulo);
+  const rotacion = (Math.atan2(dy, dx) * 180) / Math.PI;
+  return { x, y, rotacion };
 }
 
 export default function FlujoCiclo() {
@@ -49,6 +61,19 @@ export default function FlujoCiclo() {
         className="animate-spin-slow absolute inset-8 rounded-full bg-[conic-gradient(var(--color-accent-200)_0deg,transparent_90deg,var(--color-mint-200)_180deg,transparent_270deg)] opacity-40 dark:opacity-20"
         aria-hidden="true"
       />
+      {PASOS.map((_, i) => {
+        const { x, y, rotacion } = posicionFlecha(i, PASOS.length);
+        return (
+          <span
+            key={`flecha-${i}`}
+            className="absolute flex h-5 w-5 items-center justify-center text-accent-500 dark:text-accent-300"
+            style={{ transform: `translate(${x}px, ${y}px) rotate(${rotacion}deg)` }}
+            aria-hidden="true"
+          >
+            <ChevronRight size={16} strokeWidth={2.5} />
+          </span>
+        );
+      })}
       {PASOS.map((p, i) => {
         const { x, y } = posicion(i, PASOS.length);
         const Icon = p.icon;

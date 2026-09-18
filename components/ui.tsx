@@ -3,20 +3,20 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 
 export const card =
-  "rounded-xl border-2 border-slate-300 bg-white shadow-md shadow-slate-900/[0.06] dark:border-slate-700 dark:bg-slate-900 dark:shadow-black/20";
+  "rounded-xl border-2 border-slate-300 bg-white shadow-md shadow-slate-900/[0.06] transition-shadow duration-300 hover:shadow-lg dark:border-slate-700 dark:bg-slate-900 dark:shadow-black/20";
 export const cardPadded = `${card} p-5 sm:p-6`;
 
 export const inputClass =
-  "w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-brand-400 focus:ring-4 focus:ring-brand-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:focus:ring-brand-900/40";
+  "w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition-all duration-200 focus:border-brand-400 focus:ring-4 focus:ring-brand-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:focus:ring-brand-900/40";
 
 export const buttonPrimary =
-  "inline-flex items-center justify-center gap-2 rounded-lg bg-brand-700 px-4 py-2.5 text-sm font-medium text-white shadow-sm shadow-brand-700/20 transition hover:bg-brand-800 disabled:cursor-not-allowed disabled:opacity-50";
+  "inline-flex items-center justify-center gap-2 rounded-lg bg-brand-700 px-4 py-2.5 text-sm font-medium text-white shadow-sm shadow-brand-700/20 transition-all duration-200 hover:scale-[1.03] hover:bg-brand-800 hover:shadow-md active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:scale-100";
 
 export const buttonSecondary =
-  "inline-flex items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:border-brand-200 hover:bg-brand-50/60 hover:text-brand-800 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700";
+  "inline-flex items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 transition-all duration-200 hover:scale-[1.03] hover:border-brand-200 hover:bg-brand-50/60 hover:text-brand-800 hover:shadow-sm active:scale-[0.97] dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700";
 
 export const buttonGhost =
-  "inline-flex items-center gap-1 text-sm font-medium text-brand-800 underline-offset-2 hover:underline dark:text-brand-300";
+  "inline-flex items-center gap-1 text-sm font-medium text-brand-800 underline-offset-2 transition-colors hover:underline dark:text-brand-300";
 
 // Paleta de estado (semántica tipo semáforo, independiente del color
 // institucional): verde = al día/finalizado, ámbar = pendiente/en proceso,

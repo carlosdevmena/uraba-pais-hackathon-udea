@@ -2,6 +2,8 @@ import Link from "next/link";
 import { Users, HeartHandshake, ClipboardList, Filter, MapPin, X, ShieldCheck, Download, FileSpreadsheet } from "lucide-react";
 import { Badge, card, inputClass } from "@/components/ui";
 import GraficoIngresosBeneficiarios from "@/components/GraficoIngresosBeneficiarios";
+import Reveal from "@/components/Reveal";
+import NumeroAnimado from "@/components/NumeroAnimado";
 import {
   obtenerDatosReporte,
   obtenerSerieTemporal,
@@ -48,7 +50,9 @@ function TarjetaIndicador({
         </span>
         <p className="text-sm">{titulo}</p>
       </div>
-      <p className="mt-3 text-3xl font-semibold text-slate-900 dark:text-slate-100">{valor}</p>
+      <p className="mt-3 text-3xl font-semibold text-slate-900 dark:text-slate-100">
+        {typeof valor === "number" ? <NumeroAnimado valor={valor} /> : valor}
+      </p>
     </div>
   );
 }
@@ -72,7 +76,7 @@ function TablaDistribucion({
             </span>
             <div className="h-2 flex-1 overflow-hidden rounded-full bg-brand-50 dark:bg-brand-900/30">
               <div
-                className="h-full rounded-full bg-brand-600 dark:bg-brand-400"
+                className="h-full rounded-full bg-brand-600 transition-[width] duration-700 ease-out dark:bg-brand-400"
                 style={{ width: `${(f.valor / total) * 100}%` }}
               />
             </div>
@@ -216,7 +220,7 @@ export default async function ReportesPage({
         </div>
       )}
 
-      <div className="grid gap-4 sm:grid-cols-3">
+      <Reveal className="grid gap-4 sm:grid-cols-3">
         <TarjetaIndicador titulo="Beneficiarios únicos" valor={datos.beneficiariosUnicos} icon={Users} />
         <TarjetaIndicador
           titulo="Atenciones o ayudas registradas"
@@ -228,9 +232,11 @@ export default async function ReportesPage({
           valor={datos.seguimientosPendientes}
           icon={ClipboardList}
         />
-      </div>
+      </Reveal>
 
-      <GraficoIngresosBeneficiarios series={series} />
+      <Reveal retraso={100}>
+        <GraficoIngresosBeneficiarios series={series} />
+      </Reveal>
 
       <div className="grid gap-4 sm:grid-cols-2">
         <TablaDistribucion

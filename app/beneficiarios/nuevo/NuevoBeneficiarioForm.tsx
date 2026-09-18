@@ -37,7 +37,7 @@ const HACE_120_ANIOS = new Date(new Date().setFullYear(new Date().getFullYear() 
 
 function ErrorCampo({ mensaje }: { mensaje?: string }) {
   if (!mensaje) return null;
-  return <span className="mt-1 text-xs font-semibold text-rose-600">{mensaje}</span>;
+  return <span className="mt-1 text-xs font-semibold text-rose-600 dark:text-rose-400">{mensaje}</span>;
 }
 
 function Campo({
@@ -53,9 +53,9 @@ function Campo({
 }) {
   return (
     <label className="flex flex-col gap-1 text-sm">
-      <span className="font-medium text-slate-700">{label}</span>
+      <span className="font-medium text-slate-700 dark:text-slate-300">{label}</span>
       {children}
-      {hint && !error && <span className="text-xs text-slate-500">{hint}</span>}
+      {hint && !error && <span className="text-xs text-slate-500 dark:text-slate-400">{hint}</span>}
       <ErrorCampo mensaje={error} />
     </label>
   );
@@ -63,8 +63,8 @@ function Campo({
 
 function FieldsetHeader({ icon, title }: { icon: React.ReactNode; title: string }) {
   return (
-    <legend className="mb-1 flex items-center gap-2 px-1 text-sm font-semibold text-slate-900">
-      <span className="text-brand-700">{icon}</span>
+    <legend className="mb-1 flex items-center gap-2 px-1 text-sm font-semibold text-slate-900 dark:text-slate-100">
+      <span className="text-brand-700 dark:text-brand-300">{icon}</span>
       {title}
     </legend>
   );
@@ -87,7 +87,7 @@ export default function NuevoBeneficiarioForm() {
       <ModalTratamientoDatos abierto={modalAbierto} onCerrar={() => setModalAbierto(false)} />
 
       {state.coincidenciasDifusas && state.coincidenciasDifusas.length > 0 && (
-        <div className="flex flex-col gap-3 rounded-xl border border-orange-200 bg-orange-50 px-4 py-3 text-sm text-orange-800">
+        <div className="flex flex-col gap-3 rounded-xl border border-orange-200 bg-orange-50 px-4 py-3 text-sm text-orange-800 dark:border-orange-800 dark:bg-orange-900/30 dark:text-orange-200">
           <div className="flex items-start gap-3">
             <SearchCheck size={18} className="mt-0.5 shrink-0" />
             <div>
@@ -101,7 +101,7 @@ export default function NuevoBeneficiarioForm() {
                     <Link href={`/beneficiarios/${c.id}`} className="font-medium underline" target="_blank">
                       {c.nombres} ({c.codigoInterno})
                     </Link>
-                    <span className="text-xs text-orange-700">
+                    <span className="text-xs text-orange-700 dark:text-orange-300">
                       {c.municipio ?? "sin municipio"} · similitud {Math.round(c.score * 100)}%
                     </span>
                   </li>
@@ -109,7 +109,7 @@ export default function NuevoBeneficiarioForm() {
               </ul>
             </div>
           </div>
-          <label className="flex items-start gap-2 border-t border-orange-200 pt-3">
+          <label className="flex items-start gap-2 border-t border-orange-200 pt-3 dark:border-orange-800">
             <input
               type="checkbox"
               name="confirmarSinCoincidencia"
@@ -241,7 +241,7 @@ export default function NuevoBeneficiarioForm() {
         </Campo>
 
         <div className="sm:col-span-2">
-          <label className="flex items-center gap-2 text-sm text-slate-700">
+          <label className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300">
             <input
               type="checkbox"
               name="discapacidad"
@@ -273,7 +273,7 @@ export default function NuevoBeneficiarioForm() {
 
       <fieldset className={`grid gap-4 ${card} p-5 sm:grid-cols-2 sm:p-6`}>
         <FieldsetHeader icon={<Users size={16} />} title="Núcleo familiar *" />
-        <p className="-mt-2 text-xs text-slate-500 sm:col-span-2">
+        <p className="-mt-2 text-xs text-slate-500 dark:text-slate-400 sm:col-span-2">
           Registra al menos un integrante del núcleo familiar con nombre y parentesco.
         </p>
         <div className="grid grid-cols-2 gap-2 sm:col-span-2 sm:grid-cols-[1fr_1fr]">
@@ -313,7 +313,7 @@ export default function NuevoBeneficiarioForm() {
 
       <fieldset className={`${card} p-5 sm:p-6`}>
         <FieldsetHeader icon={<ShieldCheck size={16} />} title="Protección de datos" />
-        <label className="flex items-start gap-2 text-sm text-slate-700">
+        <label className="flex items-start gap-2 text-sm text-slate-700 dark:text-slate-300">
           <input
             type="checkbox"
             name="autorizacionDatos"
@@ -326,7 +326,7 @@ export default function NuevoBeneficiarioForm() {
             <button
               type="button"
               onClick={() => setModalAbierto(true)}
-              className="font-medium text-brand-700 underline underline-offset-2 hover:text-brand-800"
+              className="font-medium text-brand-700 underline underline-offset-2 hover:text-brand-800 dark:text-brand-300"
             >
               Leer aquí
             </button>
