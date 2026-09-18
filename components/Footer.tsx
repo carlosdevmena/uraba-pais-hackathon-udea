@@ -75,7 +75,7 @@ function BloqueLogos({ titulo, entidades }: { titulo: string; entidades: typeof 
             rel="noreferrer noopener"
             title={a.nombre}
             aria-label={a.nombre}
-            className="flex h-14 w-28 items-center justify-center rounded-lg bg-white p-2 shadow-sm transition hover:shadow-md hover:ring-2 hover:ring-accent-400"
+            className="flex h-14 w-28 items-center justify-center rounded-lg bg-white p-2 shadow-sm transition-all duration-200 hover:scale-105 hover:shadow-md hover:ring-2 hover:ring-accent-400"
           >
             <Image src={a.src} alt={a.nombre} width={160} height={80} className="h-full w-full object-contain" />
           </a>
