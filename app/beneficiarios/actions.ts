@@ -461,6 +461,7 @@ export async function actualizarSeguimiento(_prevState: ActionState, formData: F
 export async function finalizarSeguimiento(formData: FormData): Promise<void> {
   const seguimientoId = String(formData.get("seguimientoId") ?? "");
   const beneficiarioId = String(formData.get("beneficiarioId") ?? "");
+  const volverA = String(formData.get("volverA") ?? "").trim() || null;
   if (!seguimientoId || !beneficiarioId) return;
 
   await prisma.seguimiento.update({
@@ -468,8 +469,10 @@ export async function finalizarSeguimiento(formData: FormData): Promise<void> {
     data: { accionPendiente: null, proximoContacto: null },
   });
 
-  // Sin redirect(): la ruta que invoca esta acción (ficha, lista o edición
-  // de seguimientos) se refresca in situ tras la mutación.
+  // Redirige siempre (a `volverA` si vino, o a la ficha) para que quede una
+  // confirmación visible del cambio — quedarse en la misma pantalla sin
+  // navegar dejaba la duda de si realmente se guardó.
   revalidatePath(`/beneficiarios/${beneficiarioId}`);
   revalidatePath(`/beneficiarios/${beneficiarioId}/seguimientos`);
+  redirect(volverA || `/beneficiarios/${beneficiarioId}`);
 }

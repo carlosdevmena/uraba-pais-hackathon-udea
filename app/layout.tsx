@@ -23,18 +23,30 @@ export const metadata: Metadata = {
     "Prototipo de registro, vinculación, atención y seguimiento de beneficiarios — Hackathon URABÁ-PAÍS",
 };
 
+const TEMA_INICIAL_SCRIPT = `
+try {
+  var t = localStorage.getItem('theme');
+  var oscuro = t === 'dark' || (!t && window.matchMedia('(prefers-color-scheme: dark)').matches);
+  if (oscuro) document.documentElement.classList.add('dark');
+} catch (e) {}
+`;
+
 export default async function RootLayout({ children }: LayoutProps<"/">) {
   const rol = await obtenerRolActivo();
 
   return (
     <html
       lang="es"
+      suppressHydrationWarning
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="relative min-h-full flex flex-col overflow-x-hidden bg-gradient-to-b from-brand-50/40 via-mint-50/20 to-sky-50/30 text-slate-900">
-        <div className="pointer-events-none fixed -left-32 top-24 -z-10 h-80 w-80 rounded-full bg-mint-100/40 blur-3xl" />
-        <div className="pointer-events-none fixed -right-24 top-1/3 -z-10 h-72 w-72 rounded-full bg-accent-100/30 blur-3xl" />
-        <div className="pointer-events-none fixed -left-16 bottom-0 -z-10 h-64 w-64 rounded-full bg-brand-100/40 blur-3xl" />
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: TEMA_INICIAL_SCRIPT }} />
+      </head>
+      <body className="relative min-h-full flex flex-col overflow-x-hidden bg-gradient-to-b from-brand-50/40 via-mint-50/20 to-sky-50/30 text-slate-900 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 dark:text-slate-100">
+        <div className="pointer-events-none fixed -left-32 top-24 -z-10 h-80 w-80 rounded-full bg-mint-100/40 blur-3xl dark:bg-mint-700/10" />
+        <div className="pointer-events-none fixed -right-24 top-1/3 -z-10 h-72 w-72 rounded-full bg-accent-100/30 blur-3xl dark:bg-accent-600/10" />
+        <div className="pointer-events-none fixed -left-16 bottom-0 -z-10 h-64 w-64 rounded-full bg-brand-100/40 blur-3xl dark:bg-brand-900/20" />
         <NavBar rol={rol} />
         <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-6 sm:px-8 sm:py-8 lg:px-12 xl:px-16">
           <PageFade>{children}</PageFade>

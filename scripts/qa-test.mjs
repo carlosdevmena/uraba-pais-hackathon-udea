@@ -45,10 +45,14 @@ async function loginComoAdministrador(context) {
   const page = await nuevaPagina(context);
   await page.goto(`${BASE}/login`, { waitUntil: "networkidle" });
   await page.waitForTimeout(500);
-  await page.getByText("admin@urabapais.org", { exact: false }).first().click();
+  // El panel de accesos rápidos de demo se quitó del login — se entra con
+  // el formulario real de correo/contraseña.
+  await page.fill('input[name="correo"]', "admin@urabapais.org");
+  await page.fill('input[name="clave"]', "Admin.2026*");
+  await page.click('main button[type="submit"]');
   await page.waitForURL(/\/beneficiarios$/, { timeout: 20000 });
   const ok = page.url().endsWith("/beneficiarios");
-  log("Login demo como Administrador", ok, `url: ${page.url()}`);
+  log("Login con correo/contraseña (Administrador)", ok, `url: ${page.url()}`);
   await page.close();
 }
 

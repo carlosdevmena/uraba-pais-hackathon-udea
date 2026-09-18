@@ -22,7 +22,10 @@ export default function Toast({ data }: { data: ToastData }) {
 
   if (!data || !visible) return null;
 
-  const tono = data.tipo === "error" ? "border-rose-200 bg-rose-50 text-rose-800" : "border-orange-200 bg-orange-50 text-orange-800";
+  const tono =
+    data.tipo === "error"
+      ? "border-rose-200 bg-rose-50 text-rose-800 dark:border-rose-800 dark:bg-rose-900/40 dark:text-rose-200"
+      : "border-orange-200 bg-orange-50 text-orange-800 dark:border-orange-800 dark:bg-orange-900/40 dark:text-orange-200";
 
   return (
     <div className="fixed bottom-4 right-4 z-50 max-w-sm animate-[fadeIn_0.2s_ease-out]">

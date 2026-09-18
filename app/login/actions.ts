@@ -22,21 +22,6 @@ async function setCookieSesion(rol: Rol) {
   });
 }
 
-/**
- * Acceso de demostración para jurado/evaluadores: no hay tabla de usuarios
- * en el schema (la guía oficial del hackathon permite que login/roles sean
- * un componente complementario). El rol queda en una cookie httpOnly que
- * `middleware.ts` usa para bloquear rutas según permisos.
- */
-export async function iniciarSesionDemo(formData: FormData) {
-  const rolRaw = String(formData.get("rol") ?? "");
-  const rol = (ROLES as readonly string[]).includes(rolRaw) ? (rolRaw as Rol) : null;
-  if (!rol) return;
-
-  await setCookieSesion(rol);
-  redirect(RUTA_POR_ROL[rol]);
-}
-
 export type LoginManualState = { error?: string };
 
 /**

@@ -161,7 +161,7 @@ export const RANGOS_TEMPORALES = {
 };
 export type RangoTemporal = keyof typeof RANGOS_TEMPORALES;
 
-export type PuntoSerie = { periodo: string; registros: number; atenciones: number };
+export type PuntoSerie = { periodo: string; fechaInicio: string; registros: number; atenciones: number };
 
 function formatearPeriodo(fecha: Date, unidad: "day" | "week" | "month"): string {
   if (unidad === "month") return new Intl.DateTimeFormat("es-CO", { month: "short", year: "2-digit" }).format(fecha);
@@ -209,6 +209,7 @@ export async function obtenerSerieTemporal(rango: RangoTemporal): Promise<PuntoS
     .sort(([a], [b]) => a - b)
     .map(([, v]) => ({
       periodo: formatearPeriodo(v.fecha, unidad),
+      fechaInicio: v.fecha.toISOString(),
       registros: v.registros,
       atenciones: v.atenciones,
     }));

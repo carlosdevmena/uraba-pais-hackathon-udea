@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Users, HeartHandshake, ClipboardList, Filter, MapPin, X, ShieldCheck, Download } from "lucide-react";
+import { Users, HeartHandshake, ClipboardList, Filter, MapPin, X, ShieldCheck, Download, FileSpreadsheet } from "lucide-react";
 import { Badge, card, inputClass } from "@/components/ui";
 import GraficoIngresosBeneficiarios from "@/components/GraficoIngresosBeneficiarios";
 import {
@@ -42,13 +42,13 @@ function TarjetaIndicador({
 }) {
   return (
     <div className={`${card} p-5`}>
-      <div className="flex items-center gap-2 text-slate-500">
-        <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-50 text-brand-700">
+      <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400">
+        <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-50 text-brand-700 dark:bg-brand-900/40 dark:text-brand-300">
           <Icon size={16} />
         </span>
         <p className="text-sm">{titulo}</p>
       </div>
-      <p className="mt-3 text-3xl font-semibold text-slate-900">{valor}</p>
+      <p className="mt-3 text-3xl font-semibold text-slate-900 dark:text-slate-100">{valor}</p>
     </div>
   );
 }
@@ -63,23 +63,23 @@ function TablaDistribucion({
   const total = filas.reduce((acc, f) => acc + f.valor, 0) || 1;
   return (
     <div className={`${card} p-5`}>
-      <h2 className="text-sm font-semibold text-slate-900">{titulo}</h2>
+      <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100">{titulo}</h2>
       <div className="mt-3 flex flex-col gap-2.5">
         {filas.map((f) => (
           <div key={f.etiqueta} className="flex items-center gap-2 text-sm sm:gap-3">
-            <span className="w-20 shrink-0 truncate text-slate-600 sm:w-40" title={f.etiqueta}>
+            <span className="w-20 shrink-0 truncate text-slate-600 dark:text-slate-400 sm:w-40" title={f.etiqueta}>
               {f.etiqueta}
             </span>
-            <div className="h-2 flex-1 overflow-hidden rounded-full bg-brand-50">
+            <div className="h-2 flex-1 overflow-hidden rounded-full bg-brand-50 dark:bg-brand-900/30">
               <div
-                className="h-full rounded-full bg-brand-600"
+                className="h-full rounded-full bg-brand-600 dark:bg-brand-400"
                 style={{ width: `${(f.valor / total) * 100}%` }}
               />
             </div>
-            <span className="w-8 shrink-0 text-right font-medium text-slate-900">{f.valor}</span>
+            <span className="w-8 shrink-0 text-right font-medium text-slate-900 dark:text-slate-100">{f.valor}</span>
           </div>
         ))}
-        {filas.length === 0 && <p className="text-sm text-slate-400">Sin datos aún.</p>}
+        {filas.length === 0 && <p className="text-sm text-slate-400 dark:text-slate-500">Sin datos aún.</p>}
       </div>
     </div>
   );
@@ -112,35 +112,44 @@ export default async function ReportesPage({
 
   const queryExport = new URLSearchParams(
     Object.entries(filtros).filter((entry): entry is [string, string] => Boolean(entry[1]))
-  ).toString();
+  );
 
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="text-xl font-semibold text-slate-900">Reportes e indicadores</h1>
-          <p className="mt-1 text-sm text-slate-500">
+          <h1 className="text-xl font-semibold text-slate-900 dark:text-slate-100">Reportes e indicadores</h1>
+          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
             Datos agregados, calculados en tiempo real a partir de la información registrada.
             No se muestran nombres ni documentos.
           </p>
         </div>
-        <Link
-          href={`/reportes/export${queryExport ? `?${queryExport}` : ""}`}
-          className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-brand-200 hover:bg-brand-50/60 hover:text-brand-800"
-        >
-          <Download size={15} />
-          Descargar reporte (CSV)
-        </Link>
+        <div className="flex flex-wrap gap-2">
+          <Link
+            href={`/reportes/export?${new URLSearchParams([...queryExport, ["formato", "csv"]]).toString()}`}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-brand-200 hover:bg-brand-50/60 hover:text-brand-800 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
+          >
+            <Download size={15} />
+            CSV
+          </Link>
+          <Link
+            href={`/reportes/export?${new URLSearchParams([...queryExport, ["formato", "xlsx"]]).toString()}`}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-brand-200 hover:bg-brand-50/60 hover:text-brand-800 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
+          >
+            <FileSpreadsheet size={15} />
+            Excel
+          </Link>
+        </div>
       </div>
 
       <form className={`${card} flex flex-col gap-3 p-4`}>
-        <div className="flex items-center gap-2 text-sm font-semibold text-slate-900">
-          <Filter size={15} className="text-brand-700" />
+        <div className="flex items-center gap-2 text-sm font-semibold text-slate-900 dark:text-slate-100">
+          <Filter size={15} className="text-brand-700 dark:text-brand-300" />
           Filtros
         </div>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
           <label className="flex flex-col gap-1 text-xs">
-            <span className="font-medium text-slate-600">Municipio</span>
+            <span className="font-medium text-slate-600 dark:text-slate-400">Municipio</span>
             <select name="municipio" defaultValue={filtros.municipio ?? ""} className={inputClass}>
               <option value="">Todos</option>
               {MUNICIPIOS.map((m) => (
@@ -151,7 +160,7 @@ export default async function ReportesPage({
             </select>
           </label>
           <label className="flex flex-col gap-1 text-xs">
-            <span className="font-medium text-slate-600">Tipo de población</span>
+            <span className="font-medium text-slate-600 dark:text-slate-400">Tipo de población</span>
             <select name="poblacion" defaultValue={filtros.poblacion ?? ""} className={inputClass}>
               <option value="">Todas</option>
               {Object.entries(ETIQUETAS_POBLACION).map(([value, label]) => (
@@ -162,7 +171,7 @@ export default async function ReportesPage({
             </select>
           </label>
           <label className="flex flex-col gap-1 text-xs">
-            <span className="font-medium text-slate-600">Programa</span>
+            <span className="font-medium text-slate-600 dark:text-slate-400">Programa</span>
             <select name="programa" defaultValue={filtros.programa ?? ""} className={inputClass}>
               <option value="">Todos</option>
               {datos.programas.map((p) => (
@@ -173,11 +182,11 @@ export default async function ReportesPage({
             </select>
           </label>
           <label className="flex flex-col gap-1 text-xs">
-            <span className="font-medium text-slate-600">Registrado desde</span>
+            <span className="font-medium text-slate-600 dark:text-slate-400">Registrado desde</span>
             <input type="date" name="desde" defaultValue={filtros.desde ?? ""} className={inputClass} />
           </label>
           <label className="flex flex-col gap-1 text-xs">
-            <span className="font-medium text-slate-600">Registrado hasta</span>
+            <span className="font-medium text-slate-600 dark:text-slate-400">Registrado hasta</span>
             <input type="date" name="hasta" defaultValue={filtros.hasta ?? ""} className={inputClass} />
           </label>
         </div>
@@ -192,7 +201,7 @@ export default async function ReportesPage({
           {hayFiltrosActivos && (
             <Link
               href="/reportes"
-              className="inline-flex items-center gap-1 text-sm font-medium text-slate-500 transition hover:text-slate-800"
+              className="inline-flex items-center gap-1 text-sm font-medium text-slate-500 transition hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200"
             >
               <X size={14} />
               Limpiar
@@ -202,7 +211,7 @@ export default async function ReportesPage({
       </form>
 
       {hayFiltrosActivos && datos.beneficiariosUnicos === 0 && (
-        <div className="rounded-lg border border-dashed border-slate-200 bg-slate-50/60 px-4 py-6 text-center text-sm text-slate-400">
+        <div className="rounded-lg border border-dashed border-slate-200 bg-slate-50/60 px-4 py-6 text-center text-sm text-slate-400 dark:border-slate-700 dark:bg-slate-800/40 dark:text-slate-500">
           Ningún beneficiario coincide con estos filtros.
         </div>
       )}
@@ -254,11 +263,11 @@ export default async function ReportesPage({
         />
       </div>
       <div className={`${card} p-5 sm:p-6`}>
-        <div className="flex items-center gap-2 text-sm font-semibold text-slate-900">
-          <ShieldCheck size={16} className="text-brand-700" />
+        <div className="flex items-center gap-2 text-sm font-semibold text-slate-900 dark:text-slate-100">
+          <ShieldCheck size={16} className="text-brand-700 dark:text-brand-300" />
           Auditoría y consolidación de datos
         </div>
-        <p className="mt-1 text-sm text-slate-500">
+        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
           El sistema aplica el principio de <strong>ficha única por persona</strong>: cada
           beneficiario conserva un solo código interno aunque acumule varias participaciones,
           atenciones o seguimientos. Cifras reales de esta base (no una muestra de referencia):
@@ -270,9 +279,9 @@ export default async function ReportesPage({
             { label: "Eventos por beneficiario (prom.)", valor: datos.promedioEventos.toFixed(1) },
             { label: "Fichas con múltiples eventos", valor: datos.fichasConsolidadas.length },
           ].map((m) => (
-            <div key={m.label} className="rounded-lg border border-slate-200 bg-slate-50/60 p-3">
-              <p className="text-xs text-slate-500">{m.label}</p>
-              <p className="mt-1 text-xl font-semibold text-slate-900">{m.valor}</p>
+            <div key={m.label} className="rounded-lg border border-slate-200 bg-slate-50/60 p-3 dark:border-slate-700 dark:bg-slate-800/50">
+              <p className="text-xs text-slate-500 dark:text-slate-400">{m.label}</p>
+              <p className="mt-1 text-xl font-semibold text-slate-900 dark:text-slate-100">{m.valor}</p>
             </div>
           ))}
         </div>
@@ -280,7 +289,7 @@ export default async function ReportesPage({
         {datos.fichasConsolidadas.length > 0 ? (
           <div className="mt-4 overflow-x-auto">
             <table className="w-full min-w-[480px] text-sm">
-              <thead className="text-left text-xs uppercase tracking-wide text-slate-400">
+              <thead className="text-left text-xs uppercase tracking-wide text-slate-400 dark:text-slate-500">
                 <tr>
                   <th className="py-2 pr-4">Código interno</th>
                   <th className="py-2 pr-4">Eventos vinculados</th>
@@ -288,12 +297,12 @@ export default async function ReportesPage({
                   <th className="py-2 pr-4">Estado</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                 {datos.fichasConsolidadas.map((b) => (
                   <tr key={b.codigoInterno}>
-                    <td className="py-2 pr-4 font-mono text-xs text-slate-600">{b.codigoInterno}</td>
-                    <td className="py-2 pr-4 text-slate-800">{b.totalEventos}</td>
-                    <td className="py-2 pr-4 text-slate-600">
+                    <td className="py-2 pr-4 font-mono text-xs text-slate-600 dark:text-slate-400">{b.codigoInterno}</td>
+                    <td className="py-2 pr-4 text-slate-800 dark:text-slate-200">{b.totalEventos}</td>
+                    <td className="py-2 pr-4 text-slate-600 dark:text-slate-400">
                       {b.lineas.length > 0 ? b.lineas.join(", ") : "—"}
                     </td>
                     <td className="py-2 pr-4">
@@ -305,13 +314,13 @@ export default async function ReportesPage({
             </table>
           </div>
         ) : (
-          <p className="mt-4 text-sm text-slate-400">
+          <p className="mt-4 text-sm text-slate-400 dark:text-slate-500">
             Ningún beneficiario tiene todavía más de un evento registrado.
           </p>
         )}
       </div>
 
-      <p className="flex items-center gap-1.5 text-xs text-slate-400">
+      <p className="flex items-center gap-1.5 text-xs text-slate-400 dark:text-slate-500">
         <MapPin size={12} />
         Territorio del proyecto: Apartadó, Turbo y Necoclí (Urabá antioqueño).
       </p>

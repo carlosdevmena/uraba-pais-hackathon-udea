@@ -16,12 +16,25 @@ export default function AiAssistant() {
   const [abierto, setAbierto] = useState(false);
   const [consulta, setConsulta] = useState("");
   const [mensajes, setMensajes] = useState<Mensaje[]>([]);
+  const [cercaDelFooter, setCercaDelFooter] = useState(false);
   const [pending, startTransition] = useTransition();
   const finRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     finRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [mensajes, pending]);
+
+  // El botón flotante usa el mismo teal que el footer — cambia a ámbar
+  // cuando el footer entra en pantalla para no perderse contra su fondo.
+  useEffect(() => {
+    const footer = document.querySelector("footer");
+    if (!footer) return;
+    const observer = new IntersectionObserver(([entrada]) => setCercaDelFooter(entrada.isIntersecting), {
+      rootMargin: "0px 0px -10% 0px",
+    });
+    observer.observe(footer);
+    return () => observer.disconnect();
+  }, []);
 
   function preguntar(texto: string) {
     const pregunta = texto.trim();
@@ -42,7 +55,7 @@ export default function AiAssistant() {
   return (
     <div className="fixed bottom-5 right-5 z-40 flex flex-col items-end gap-3">
       {abierto && (
-        <div className="flex h-[28rem] w-[22rem] max-w-[calc(100vw-2.5rem)] flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl">
+        <div className="flex h-[28rem] w-[22rem] max-w-[calc(100vw-2.5rem)] flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl dark:border-slate-700 dark:bg-slate-900">
           <div className="flex items-center justify-between gap-2 bg-brand-700 px-4 py-3 text-white">
             <div className="flex items-center gap-2 text-sm font-semibold">
               <Sparkles size={16} className="text-accent-400" />
@@ -59,7 +72,7 @@ export default function AiAssistant() {
           </div>
 
           <div className="flex-1 overflow-y-auto px-4 py-3">
-            <p className="mb-3 text-xs text-slate-500">
+            <p className="mb-3 text-xs text-slate-500 dark:text-slate-400">
               Pregunta sobre los indicadores agregados. Nunca veo nombres, documentos ni
               teléfonos — solo cifras.
             </p>
@@ -71,7 +84,7 @@ export default function AiAssistant() {
                     key={s}
                     type="button"
                     onClick={() => preguntar(s)}
-                    className="rounded-lg border border-slate-200 px-3 py-2 text-left text-xs text-slate-600 transition hover:border-brand-300 hover:bg-brand-50/60"
+                    className="rounded-lg border border-slate-200 px-3 py-2 text-left text-xs text-slate-600 transition hover:border-brand-300 hover:bg-brand-50/60 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
                   >
                     {s}
                   </button>
@@ -87,8 +100,8 @@ export default function AiAssistant() {
                     m.rol === "usuario"
                       ? "self-end bg-brand-700 text-white"
                       : m.esError
-                        ? "self-start bg-rose-50 text-rose-700"
-                        : "self-start bg-mint-50 text-slate-800"
+                        ? "self-start bg-rose-50 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300"
+                        : "self-start bg-mint-50 text-slate-800 dark:bg-mint-700/20 dark:text-slate-100"
                   }`}
                 >
                   {m.texto}
@@ -105,7 +118,7 @@ export default function AiAssistant() {
           </div>
 
           <form
-            className="flex items-center gap-2 border-t border-slate-200 p-3"
+            className="flex items-center gap-2 border-t border-slate-200 p-3 dark:border-slate-700"
             onSubmit={(e) => {
               e.preventDefault();
               preguntar(consulta);
@@ -115,7 +128,7 @@ export default function AiAssistant() {
               value={consulta}
               onChange={(e) => setConsulta(e.target.value)}
               placeholder="Escribe tu pregunta..."
-              className="w-full flex-1 rounded-full border border-slate-200 bg-white px-3.5 py-2 text-sm outline-none transition focus:border-brand-400 focus:ring-4 focus:ring-brand-50"
+              className="w-full flex-1 rounded-full border border-slate-200 bg-white px-3.5 py-2 text-sm outline-none transition focus:border-brand-400 focus:ring-4 focus:ring-brand-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
             />
             <button
               type="submit"
@@ -133,7 +146,9 @@ export default function AiAssistant() {
         type="button"
         onClick={() => setAbierto((v) => !v)}
         aria-label={abierto ? "Cerrar asistente de IA" : "Abrir asistente de IA"}
-        className="flex h-14 w-14 items-center justify-center rounded-full bg-brand-700 text-white shadow-lg transition hover:scale-105 hover:bg-brand-800"
+        className={`flex h-14 w-14 items-center justify-center rounded-full text-white shadow-lg transition hover:scale-105 ${
+          cercaDelFooter ? "bg-accent-400 hover:bg-accent-500" : "bg-brand-700 hover:bg-brand-800"
+        }`}
       >
         {abierto ? <X size={22} /> : <MessageCircle size={22} />}
       </button>

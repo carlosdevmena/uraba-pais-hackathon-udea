@@ -28,13 +28,13 @@ export default function ModalTratamientoDatos({
       onClick={onCerrar}
     >
       <div
-        className="max-h-[85vh] w-full max-w-lg overflow-y-auto rounded-xl bg-white p-6 shadow-xl"
+        className="max-h-[85vh] w-full max-w-lg overflow-y-auto rounded-xl bg-white p-6 shadow-xl dark:bg-slate-900"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-center gap-2">
-            <ShieldCheck size={20} className="text-brand-700" />
-            <h2 id="titulo-tratamiento-datos" className="text-base font-semibold text-slate-900">
+            <ShieldCheck size={20} className="text-brand-700 dark:text-brand-300" />
+            <h2 id="titulo-tratamiento-datos" className="text-base font-semibold text-slate-900 dark:text-slate-100">
               Autorización para el Tratamiento de Datos Personales
             </h2>
           </div>
@@ -42,13 +42,13 @@ export default function ModalTratamientoDatos({
             type="button"
             onClick={onCerrar}
             aria-label="Cerrar"
-            className="rounded-full p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700"
+            className="rounded-full p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200"
           >
             <X size={18} />
           </button>
         </div>
 
-        <div className="mt-4 flex flex-col gap-3 text-sm text-slate-600">
+        <div className="mt-4 flex flex-col gap-3 text-sm text-slate-600 dark:text-slate-300">
           <p>
             De conformidad con la <strong>Ley Estatutaria 1581 de 2012</strong> y su decreto
             reglamentario <strong>1377 de 2013</strong> de la República de Colombia, la información

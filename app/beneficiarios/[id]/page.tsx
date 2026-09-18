@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { ShieldCheck, ShieldAlert, Users, Link2, HeartHandshake, ClipboardList, Plus } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { Badge, EmptyState, SectionCard, buttonGhost, card } from "@/components/ui";
+import TimelineSeguimientos from "@/components/TimelineSeguimientos";
 
 export const dynamic = "force-dynamic";
 
@@ -63,7 +64,7 @@ export default async function FichaBeneficiarioPage({
 
   return (
     <div className="flex flex-col gap-6">
-      <p className="text-xs text-slate-400">
+      <p className="text-xs text-slate-400 dark:text-slate-500">
         Vista de solo consulta. Usa los enlaces &quot;+ Agregar&quot; de cada sección para registrar información
         nueva.
       </p>
@@ -71,8 +72,8 @@ export default async function FichaBeneficiarioPage({
       <section className={`${card} p-5 sm:p-6`}>
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <p className="font-mono text-xs text-brand-700">{beneficiario.codigoInterno}</p>
-            <h1 className="text-xl font-semibold text-slate-900">{beneficiario.nombres}</h1>
+            <p className="font-mono text-xs text-brand-700 dark:text-brand-300">{beneficiario.codigoInterno}</p>
+            <h1 className="text-xl font-semibold text-slate-900 dark:text-slate-100">{beneficiario.nombres}</h1>
           </div>
           {beneficiario.autorizacionDatos ? (
             <Badge tone="emerald">
@@ -86,32 +87,32 @@ export default async function FichaBeneficiarioPage({
         </div>
         <dl className="mt-4 grid gap-x-6 gap-y-3 text-sm sm:grid-cols-3">
           <div>
-            <dt className="text-slate-400">Documento</dt>
-            <dd className="text-slate-800">
+            <dt className="text-slate-400 dark:text-slate-500">Documento</dt>
+            <dd className="text-slate-800 dark:text-slate-200">
               {beneficiario.tipoDocumento && beneficiario.numeroDocumento
                 ? `${beneficiario.tipoDocumento} ${beneficiario.numeroDocumento}`
                 : "Sin documento"}
             </dd>
           </div>
           <div>
-            <dt className="text-slate-400">Fecha de nacimiento</dt>
-            <dd className="text-slate-800">{formatearFecha(beneficiario.fechaNacimiento)}</dd>
+            <dt className="text-slate-400 dark:text-slate-500">Fecha de nacimiento</dt>
+            <dd className="text-slate-800 dark:text-slate-200">{formatearFecha(beneficiario.fechaNacimiento)}</dd>
           </div>
           <div>
-            <dt className="text-slate-400">Género</dt>
-            <dd className="text-slate-800">{beneficiario.genero ?? "—"}</dd>
+            <dt className="text-slate-400 dark:text-slate-500">Género</dt>
+            <dd className="text-slate-800 dark:text-slate-200">{beneficiario.genero ?? "—"}</dd>
           </div>
           <div>
-            <dt className="text-slate-400">Municipio</dt>
-            <dd className="text-slate-800">{beneficiario.municipio ?? "—"}</dd>
+            <dt className="text-slate-400 dark:text-slate-500">Municipio</dt>
+            <dd className="text-slate-800 dark:text-slate-200">{beneficiario.municipio ?? "—"}</dd>
           </div>
           <div>
-            <dt className="text-slate-400">Teléfono</dt>
-            <dd className="text-slate-800">{beneficiario.telefono ?? "—"}</dd>
+            <dt className="text-slate-400 dark:text-slate-500">Teléfono</dt>
+            <dd className="text-slate-800 dark:text-slate-200">{beneficiario.telefono ?? "—"}</dd>
           </div>
           <div>
-            <dt className="text-slate-400">Población</dt>
-            <dd className="text-slate-800">
+            <dt className="text-slate-400 dark:text-slate-500">Población</dt>
+            <dd className="text-slate-800 dark:text-slate-200">
               <Badge tone="blue">{ETIQUETAS_POBLACION[beneficiario.tipoPoblacion] ?? beneficiario.tipoPoblacion}</Badge>
               {beneficiario.discapacidad && (
                 <span className="ml-2">
@@ -128,11 +129,11 @@ export default async function FichaBeneficiarioPage({
         icon={<Users size={16} />}
         action={<AgregarLink href={`/beneficiarios/${beneficiario.id}/familiares/nuevo`}>Agregar familiar</AgregarLink>}
       >
-        <ul className="flex flex-col gap-1 text-sm text-slate-700">
+        <ul className="flex flex-col gap-1 text-sm text-slate-700 dark:text-slate-300">
           {beneficiario.familiares.map((f) => (
             <li key={f.id} className="flex items-center gap-2">
               <span className="h-1.5 w-1.5 rounded-full bg-brand-300" />
-              {f.nombres} <span className="text-slate-400">· {f.parentesco}</span>
+              {f.nombres} <span className="text-slate-400 dark:text-slate-500">· {f.parentesco}</span>
             </li>
           ))}
         </ul>
@@ -148,7 +149,7 @@ export default async function FichaBeneficiarioPage({
       >
         <div className="overflow-x-auto">
           <table className="w-full min-w-[480px] text-sm">
-            <thead className="text-left text-xs uppercase tracking-wide text-slate-400">
+            <thead className="text-left text-xs uppercase tracking-wide text-slate-400 dark:text-slate-500">
               <tr>
                 <th className="py-2 pr-4">Programa</th>
                 <th className="py-2 pr-4">Fecha</th>
@@ -156,11 +157,11 @@ export default async function FichaBeneficiarioPage({
                 <th className="py-2 pr-4"></th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
               {beneficiario.participaciones.map((p) => (
                 <tr key={p.id}>
-                  <td className="py-2 pr-4 text-slate-800">{p.programa.nombre}</td>
-                  <td className="py-2 pr-4 text-slate-500">{formatearFecha(p.fechaVinculacion)}</td>
+                  <td className="py-2 pr-4 text-slate-800 dark:text-slate-200">{p.programa.nombre}</td>
+                  <td className="py-2 pr-4 text-slate-500 dark:text-slate-400">{formatearFecha(p.fechaVinculacion)}</td>
                   <td className="py-2 pr-4">
                     <Badge
                       tone={
@@ -199,13 +200,16 @@ export default async function FichaBeneficiarioPage({
       >
         <div className="flex flex-col gap-3">
           {beneficiario.atenciones.map((a) => (
-            <div key={a.id} className="rounded-lg border-2 border-brand-300 bg-brand-50/50 p-3 text-sm">
-              <div className="flex flex-wrap justify-between gap-2 text-slate-500">
-                <span className="font-medium text-slate-800">{a.tipo}</span>
+            <div
+              key={a.id}
+              className="rounded-lg border-2 border-brand-300 bg-brand-50/50 p-3 text-sm dark:border-brand-800 dark:bg-brand-900/10"
+            >
+              <div className="flex flex-wrap justify-between gap-2 text-slate-500 dark:text-slate-400">
+                <span className="font-medium text-slate-800 dark:text-slate-200">{a.tipo}</span>
                 <span>{formatearFecha(a.fecha)}</span>
               </div>
-              <p className="mt-1 text-slate-700">{a.descripcion}</p>
-              <p className="mt-1 text-xs text-slate-500">
+              <p className="mt-1 text-slate-700 dark:text-slate-300">{a.descripcion}</p>
+              <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
                 Responsable: {a.responsable} · Resultado: {a.resultado}
                 {a.remision ? ` · Remisión: ${a.remision}` : ""}
               </p>
@@ -221,65 +225,27 @@ export default async function FichaBeneficiarioPage({
         action={<AgregarLink href={`/beneficiarios/${beneficiario.id}/seguimientos/nuevo`}>Añadir seguimiento</AgregarLink>}
       >
         {beneficiario._count.seguimientos > 0 && (
-          <p className="-mt-1 mb-3 text-xs text-slate-500">
+          <p className="-mt-1 mb-3 text-xs text-slate-500 dark:text-slate-400">
             {beneficiario._count.seguimientos} seguimiento{beneficiario._count.seguimientos === 1 ? "" : "s"}{" "}
             registrado{beneficiario._count.seguimientos === 1 ? "" : "s"} ·{" "}
-            <span className="font-medium text-orange-700">{seguimientosPendientes} con acción pendiente</span>
+            <span className="font-medium text-orange-700 dark:text-orange-400">
+              {seguimientosPendientes} con acción pendiente
+            </span>
           </p>
         )}
-        <div className="flex flex-col gap-3">
-          {beneficiario.seguimientos.map((s) => (
-            <div
-              key={s.id}
-              className="rounded-lg border-2 border-brand-300 bg-brand-50/50 p-4 text-sm transition hover:border-brand-400"
-            >
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <span className="text-xs font-semibold uppercase tracking-wide text-brand-800">
-                  {formatearFecha(s.fecha)}
-                </span>
-                <div className="flex items-center gap-2">
-                  {s.accionPendiente ? (
-                    <Badge tone="amber">Acción pendiente</Badge>
-                  ) : (
-                    <Badge tone="emerald">Sin pendientes</Badge>
-                  )}
-                  <Link
-                    href={`/beneficiarios/${beneficiario.id}/seguimientos/${s.id}/editar`}
-                    className="text-xs font-medium text-brand-800 transition hover:underline"
-                  >
-                    Editar
-                  </Link>
-                </div>
-              </div>
-              <p className="mt-2 font-medium text-slate-900">{s.avanceNovedad}</p>
-              {s.observacion && (
-                <p className="mt-1 text-slate-600">
-                  <span className="font-semibold text-slate-700">Observación: </span>
-                  {s.observacion}
-                </p>
-              )}
-              {s.accionPendiente && (
-                <div className="mt-2 rounded-md bg-orange-100/70 px-3 py-2 text-orange-900">
-                  <p>
-                    <span className="font-semibold">Acción pendiente: </span>
-                    {s.accionPendiente}
-                  </p>
-                  {s.proximoContacto && (
-                    <p className="mt-0.5">
-                      <span className="font-semibold">Próximo contacto: </span>
-                      {formatearFecha(s.proximoContacto)}
-                    </p>
-                  )}
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
-        {beneficiario._count.seguimientos === 0 && <EmptyState>Sin seguimientos registrados.</EmptyState>}
+        {beneficiario.seguimientos.length > 0 ? (
+          <TimelineSeguimientos
+            beneficiarioId={beneficiario.id}
+            items={beneficiario.seguimientos}
+            totalCount={beneficiario._count.seguimientos}
+          />
+        ) : (
+          <EmptyState>Sin seguimientos registrados.</EmptyState>
+        )}
         {beneficiario._count.seguimientos > 5 && (
           <Link
             href={`/beneficiarios/${beneficiario.id}/seguimientos`}
-            className="mt-3 inline-block text-sm font-medium text-brand-800 transition hover:underline"
+            className="mt-3 inline-block text-sm font-medium text-brand-800 transition hover:underline dark:text-brand-300"
           >
             Ver historial completo ({beneficiario._count.seguimientos}) →
           </Link>

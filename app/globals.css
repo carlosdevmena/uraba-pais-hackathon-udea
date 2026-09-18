@@ -1,15 +1,13 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+@custom-variant dark (&:where(.dark, .dark *));
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+
+  /* Header ámbar translúcido/desenfocado (mismo tono en claro y oscuro). */
+  --color-header: #c88e08;
 
   /* Paleta humanitaria URABÁ-PAÍS: Protección y Salud.
      Primario = Teal Humanitario #0F4C5C (fondos oscuros, botones principales). */
@@ -44,16 +42,13 @@
   --color-accent-600: #b8580a;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
 body {
-  background: var(--background);
-  color: var(--foreground);
+  /* El color/degradado de fondo real lo ponen las clases de Tailwind en
+     app/layout.tsx (bg-gradient-to-b ... dark:from-*). Una declaración
+     `background` aquí (shorthand) anularía backgroundImage porque las
+     utilidades de Tailwind viven en una @layer de menor prioridad que
+     el CSS sin capa — por eso este selector solo toca lo que no compite
+     con esas utilidades. */
   font-family: Arial, Helvetica, sans-serif;
 }
 
@@ -77,4 +72,14 @@ body {
 
 .animate-shake {
   animation: shake 0.4s ease-in-out;
+}
+
+@keyframes spin-slow {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin-slow {
+  animation: spin-slow 26s linear infinite;
 }

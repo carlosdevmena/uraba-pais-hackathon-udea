@@ -48,8 +48,8 @@ export default function GaleriaProyecto() {
   return (
     <section className="flex flex-col gap-3">
       <div>
-        <h2 className="text-sm font-semibold text-slate-900">Líneas de trabajo del proyecto</h2>
-        <p className="text-xs text-slate-500">Imágenes ilustrativas de referencia.</p>
+        <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100">Líneas de trabajo del proyecto</h2>
+        <p className="text-xs text-slate-500 dark:text-slate-400">Imágenes ilustrativas de referencia.</p>
       </div>
 
       <div className={`${card} relative overflow-hidden`}>
@@ -70,8 +70,8 @@ export default function GaleriaProyecto() {
             <span className="flex h-16 w-16 items-center justify-center rounded-2xl bg-brand-700 text-yellow-400">
               <Icon size={28} />
             </span>
-            <h3 className="text-lg font-semibold text-slate-900">{activa.titulo}</h3>
-            <p className="max-w-md text-sm text-slate-500">{activa.texto}</p>
+            <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">{activa.titulo}</h3>
+            <p className="max-w-md text-sm text-slate-500 dark:text-slate-400">{activa.texto}</p>
           </div>
         )}
 
@@ -79,7 +79,7 @@ export default function GaleriaProyecto() {
           type="button"
           onClick={anterior}
           aria-label="Anterior"
-          className="absolute left-3 top-[22%] flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white/90 text-slate-600 shadow-sm transition hover:bg-white hover:text-brand-700"
+          className="absolute left-3 top-[22%] flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white/90 text-slate-600 shadow-sm transition hover:bg-white hover:text-brand-700 dark:border-slate-600 dark:bg-slate-900/80 dark:text-slate-300 dark:hover:bg-slate-900 dark:hover:text-brand-300"
         >
           <ChevronLeft size={18} />
         </button>
@@ -87,7 +87,7 @@ export default function GaleriaProyecto() {
           type="button"
           onClick={siguiente}
           aria-label="Siguiente"
-          className="absolute right-3 top-[22%] flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white/90 text-slate-600 shadow-sm transition hover:bg-white hover:text-brand-700"
+          className="absolute right-3 top-[22%] flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white/90 text-slate-600 shadow-sm transition hover:bg-white hover:text-brand-700 dark:border-slate-600 dark:bg-slate-900/80 dark:text-slate-300 dark:hover:bg-slate-900 dark:hover:text-brand-300"
         >
           <ChevronRight size={18} />
         </button>

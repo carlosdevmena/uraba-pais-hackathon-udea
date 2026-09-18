@@ -69,8 +69,8 @@ export default async function BeneficiariosPage({
     <div className="flex flex-col gap-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-xl font-semibold text-slate-900">Beneficiarios</h1>
-          <p className="text-sm text-slate-500">
+          <h1 className="text-xl font-semibold text-slate-900 dark:text-slate-100">Beneficiarios</h1>
+          <p className="text-sm text-slate-500 dark:text-slate-400">
             {total} beneficiario{total === 1 ? "" : "s"} registrado{total === 1 ? "" : "s"} · Busca a la persona
             antes de registrar un nuevo caso.
           </p>
@@ -89,7 +89,7 @@ export default async function BeneficiariosPage({
             name="q"
             defaultValue={texto}
             placeholder="Buscar por nombre, documento o código interno..."
-            className="w-full rounded-lg border-2 border-slate-300 bg-white py-2.5 pl-9 pr-3 text-sm outline-none transition focus:border-brand-400 focus:ring-4 focus:ring-brand-50"
+            className="w-full rounded-lg border-2 border-slate-300 bg-white py-2.5 pl-9 pr-3 text-sm outline-none transition focus:border-brand-400 focus:ring-4 focus:ring-brand-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
           />
         </div>
         <button type="submit" className={buttonPrimary}>
@@ -101,7 +101,7 @@ export default async function BeneficiariosPage({
       <div className={`${card} overflow-hidden`}>
         <div className="overflow-x-auto">
           <table className="w-full min-w-[760px] text-sm">
-            <thead className="bg-brand-50/50 text-left text-xs uppercase tracking-wide text-slate-500">
+            <thead className="bg-brand-50/50 text-left text-xs uppercase tracking-wide text-slate-500 dark:bg-brand-900/20 dark:text-slate-400">
               <tr>
                 <th className="px-4 py-3">Código</th>
                 <th className="px-4 py-3">Nombres</th>
@@ -116,20 +116,20 @@ export default async function BeneficiariosPage({
                 <th className="px-4 py-3"></th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
               {beneficiarios.map((b) => (
-                <tr key={b.id} className="transition hover:bg-brand-50/40">
-                  <td className="px-4 py-3 font-mono text-xs text-slate-400">{b.codigoInterno}</td>
-                  <td className="px-4 py-3 font-medium text-slate-900">{b.nombres}</td>
-                  <td className="px-4 py-3 text-slate-600">
+                <tr key={b.id} className="transition hover:bg-brand-50/40 dark:hover:bg-brand-900/20">
+                  <td className="px-4 py-3 font-mono text-xs text-slate-400 dark:text-slate-500">{b.codigoInterno}</td>
+                  <td className="px-4 py-3 font-medium text-slate-900 dark:text-slate-100">{b.nombres}</td>
+                  <td className="px-4 py-3 text-slate-600 dark:text-slate-400">
                     {b.tipoDocumento && b.numeroDocumento
                       ? `${b.tipoDocumento} ${b.numeroDocumento}`
                       : "Sin documento"}
                   </td>
-                  <td className="px-4 py-3 text-slate-600">{formatearFecha(b.fechaNacimiento)}</td>
-                  <td className="px-4 py-3 text-slate-600">{b.genero ?? "—"}</td>
-                  <td className="px-4 py-3 text-slate-600">{b.municipio ?? "—"}</td>
-                  <td className="px-4 py-3 text-slate-600">{b.telefono ?? "—"}</td>
+                  <td className="px-4 py-3 text-slate-600 dark:text-slate-400">{formatearFecha(b.fechaNacimiento)}</td>
+                  <td className="px-4 py-3 text-slate-600 dark:text-slate-400">{b.genero ?? "—"}</td>
+                  <td className="px-4 py-3 text-slate-600 dark:text-slate-400">{b.municipio ?? "—"}</td>
+                  <td className="px-4 py-3 text-slate-600 dark:text-slate-400">{b.telefono ?? "—"}</td>
                   <td className="px-4 py-3">
                     <Badge tone="blue">{ETIQUETAS_POBLACION[b.tipoPoblacion] ?? b.tipoPoblacion}</Badge>
                   </td>
@@ -150,7 +150,7 @@ export default async function BeneficiariosPage({
                   <td className="px-4 py-3 text-right">
                     <Link
                       href={`/beneficiarios/${b.id}`}
-                      className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-brand-800 shadow-sm transition hover:border-brand-300 hover:bg-brand-50 hover:shadow"
+                      className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-brand-800 shadow-sm transition hover:border-brand-300 hover:bg-brand-50 hover:shadow dark:border-slate-600 dark:bg-slate-800 dark:text-brand-300 dark:hover:bg-slate-700"
                     >
                       Ver ficha <ArrowRight size={14} />
                     </Link>
@@ -166,8 +166,8 @@ export default async function BeneficiariosPage({
           </div>
         )}
         {total > POR_PAGINA && (
-          <div className="flex items-center justify-between gap-3 border-t border-slate-200 px-4 py-3">
-            <p className="text-xs text-slate-500">
+          <div className="flex items-center justify-between gap-3 border-t border-slate-200 px-4 py-3 dark:border-slate-800">
+            <p className="text-xs text-slate-500 dark:text-slate-400">
               Página {pagina} de {totalPaginas} · mostrando {beneficiarios.length} de {total}
             </p>
             <div className="flex gap-2">

@@ -33,9 +33,13 @@ export default function EditarSeguimientoForm({
         <form action={finalizarSeguimiento} className={`flex items-center justify-between gap-3 ${cardPadded}`}>
           <input type="hidden" name="seguimientoId" value={seguimiento.id} />
           <input type="hidden" name="beneficiarioId" value={beneficiarioId} />
-          <div className="text-sm text-slate-600">
-            <p className="font-medium text-slate-900">Acción pendiente: {seguimiento.accionPendiente}</p>
-            <p className="text-xs text-slate-500">Marca como finalizado si ya no requiere seguimiento.</p>
+          <div className="text-sm text-slate-600 dark:text-slate-400">
+            <p className="font-medium text-slate-900 dark:text-slate-100">
+              Acción pendiente: {seguimiento.accionPendiente}
+            </p>
+            <p className="text-xs text-slate-500 dark:text-slate-400">
+              Marca como finalizado si ya no requiere seguimiento — se confirma volviendo a la ficha.
+            </p>
           </div>
           <button
             type="submit"
@@ -52,14 +56,14 @@ export default function EditarSeguimientoForm({
         <input type="hidden" name="beneficiarioId" value={beneficiarioId} />
 
         {state.error && (
-          <div className="flex items-start gap-2 rounded-lg border border-orange-200 bg-orange-50 px-3 py-2 text-sm text-orange-800 sm:col-span-2">
+          <div className="flex items-start gap-2 rounded-lg border border-orange-200 bg-orange-50 px-3 py-2 text-sm text-orange-800 sm:col-span-2 dark:border-orange-800 dark:bg-orange-900/30 dark:text-orange-200">
             <AlertTriangle size={16} className="mt-0.5 shrink-0" />
             {state.error}
           </div>
         )}
 
         <label className="flex flex-col gap-1 text-sm sm:col-span-2">
-          <span className="font-medium text-slate-700">Avance o novedad *</span>
+          <span className="font-medium text-slate-700 dark:text-slate-300">Avance o novedad *</span>
           <input
             name="avanceNovedad"
             required
@@ -70,15 +74,15 @@ export default function EditarSeguimientoForm({
           />
         </label>
         <label className="flex flex-col gap-1 text-sm">
-          <span className="font-medium text-slate-700">Fecha</span>
+          <span className="font-medium text-slate-700 dark:text-slate-300">Fecha</span>
           <input type="date" name="fecha" max={HOY} defaultValue={seguimiento.fecha} className={inputClass} />
         </label>
         <label className="flex flex-col gap-1 text-sm">
-          <span className="font-medium text-slate-700">Observación (opcional)</span>
+          <span className="font-medium text-slate-700 dark:text-slate-300">Observación (opcional)</span>
           <input name="observacion" maxLength={300} defaultValue={seguimiento.observacion ?? ""} className={inputClass} />
         </label>
         <label className="flex flex-col gap-1 text-sm">
-          <span className="font-medium text-slate-700">Acción pendiente (opcional)</span>
+          <span className="font-medium text-slate-700 dark:text-slate-300">Acción pendiente (opcional)</span>
           <input
             name="accionPendiente"
             maxLength={200}
@@ -87,7 +91,7 @@ export default function EditarSeguimientoForm({
           />
         </label>
         <label className="flex flex-col gap-1 text-sm">
-          <span className="font-medium text-slate-700">Próximo contacto</span>
+          <span className="font-medium text-slate-700 dark:text-slate-300">Próximo contacto</span>
           <input
             type="date"
             name="proximoContacto"
