@@ -3,7 +3,7 @@ import { Users, HeartHandshake, ClipboardList, Filter, MapPin, X, ShieldCheck, D
 import { Badge, card, inputClass } from "@/components/ui";
 import GraficoIngresosBeneficiarios from "@/components/GraficoIngresosBeneficiarios";
 import Reveal from "@/components/Reveal";
-import NumeroAnimado from "@/components/NumeroAnimado";
+import NumeroAnimado from '@/components/NumeroAnimado'; 
 import {
   obtenerDatosReporte,
   obtenerSerieTemporal,
