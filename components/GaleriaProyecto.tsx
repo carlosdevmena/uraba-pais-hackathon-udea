@@ -79,7 +79,7 @@ export default function GaleriaProyecto() {
           type="button"
           onClick={anterior}
           aria-label="Anterior"
-          className="absolute left-3 top-3 flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white/90 text-slate-600 shadow-sm transition hover:bg-white hover:text-brand-700"
+          className="absolute left-3 top-[22%] flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white/90 text-slate-600 shadow-sm transition hover:bg-white hover:text-brand-700"
         >
           <ChevronLeft size={18} />
         </button>
@@ -87,7 +87,7 @@ export default function GaleriaProyecto() {
           type="button"
           onClick={siguiente}
           aria-label="Siguiente"
-          className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white/90 text-slate-600 shadow-sm transition hover:bg-white hover:text-brand-700"
+          className="absolute right-3 top-[22%] flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white/90 text-slate-600 shadow-sm transition hover:bg-white hover:text-brand-700"
         >
           <ChevronRight size={18} />
         </button>

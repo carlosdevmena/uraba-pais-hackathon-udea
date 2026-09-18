@@ -41,15 +41,14 @@ export default function Home() {
               </Link>
             </div>
           </div>
-          <div className="relative hidden h-56 w-72 shrink-0 overflow-hidden rounded-2xl shadow-lg ring-4 ring-white lg:block">
+          <div className="relative hidden h-56 w-72 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-gradient-to-br from-mint-50 to-brand-50 shadow-lg ring-4 ring-white lg:flex">
             <Image
-              src="/hero-comunidad.jpeg"
-              alt="Comunidad del proyecto URABÁ-PAÍS participando en una actividad de integración"
+              src="/hero-ilustracion.jpeg"
+              alt="Ilustración de gestión y seguimiento de beneficiarios"
               fill
-              className="object-cover"
+              className="object-contain p-4"
               priority
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-brand-900/40 via-transparent to-transparent" />
           </div>
         </div>
       </section>
