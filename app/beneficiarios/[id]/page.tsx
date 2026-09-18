@@ -44,16 +44,20 @@ export default async function FichaBeneficiarioPage({
 }) {
   const { id } = await params;
 
-  const beneficiario = await prisma.beneficiario.findUnique({
-    where: { id },
-    include: {
-      familiares: { orderBy: { createdAt: "asc" } },
-      participaciones: { include: { programa: true }, orderBy: { fechaVinculacion: "desc" } },
-      atenciones: { orderBy: { fecha: "desc" } },
-      seguimientos: { orderBy: { fecha: "desc" } },
-    },
-    relationLoadStrategy: "join",
-  });
+  const [beneficiario, seguimientosPendientes] = await Promise.all([
+    prisma.beneficiario.findUnique({
+      where: { id },
+      include: {
+        familiares: { orderBy: { createdAt: "asc" } },
+        participaciones: { include: { programa: true }, orderBy: { fechaVinculacion: "desc" } },
+        atenciones: { orderBy: { fecha: "desc" } },
+        seguimientos: { orderBy: { fecha: "desc" }, take: 5 },
+        _count: { select: { seguimientos: true } },
+      },
+      relationLoadStrategy: "join",
+    }),
+    prisma.seguimiento.count({ where: { beneficiarioId: id, accionPendiente: { not: null } } }),
+  ]);
 
   if (!beneficiario) notFound();
 
@@ -216,27 +220,36 @@ export default async function FichaBeneficiarioPage({
         icon={<ClipboardList size={16} />}
         action={<AgregarLink href={`/beneficiarios/${beneficiario.id}/seguimientos/nuevo`}>Añadir seguimiento</AgregarLink>}
       >
-        {beneficiario.seguimientos.length > 0 && (
+        {beneficiario._count.seguimientos > 0 && (
           <p className="-mt-1 mb-3 text-xs text-slate-500">
-            {beneficiario.seguimientos.length} seguimiento{beneficiario.seguimientos.length === 1 ? "" : "s"}{" "}
-            registrado{beneficiario.seguimientos.length === 1 ? "" : "s"} ·{" "}
-            <span className="font-medium text-orange-700">
-              {beneficiario.seguimientos.filter((s) => s.accionPendiente).length} con acción pendiente
-            </span>
+            {beneficiario._count.seguimientos} seguimiento{beneficiario._count.seguimientos === 1 ? "" : "s"}{" "}
+            registrado{beneficiario._count.seguimientos === 1 ? "" : "s"} ·{" "}
+            <span className="font-medium text-orange-700">{seguimientosPendientes} con acción pendiente</span>
           </p>
         )}
         <div className="flex flex-col gap-3">
           {beneficiario.seguimientos.map((s) => (
-            <div key={s.id} className="rounded-lg border-2 border-brand-300 bg-brand-50/50 p-4 text-sm">
+            <div
+              key={s.id}
+              className="rounded-lg border-2 border-brand-300 bg-brand-50/50 p-4 text-sm transition hover:border-brand-400"
+            >
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <span className="text-xs font-semibold uppercase tracking-wide text-brand-800">
                   {formatearFecha(s.fecha)}
                 </span>
-                {s.accionPendiente ? (
-                  <Badge tone="amber">Acción pendiente</Badge>
-                ) : (
-                  <Badge tone="emerald">Sin pendientes</Badge>
-                )}
+                <div className="flex items-center gap-2">
+                  {s.accionPendiente ? (
+                    <Badge tone="amber">Acción pendiente</Badge>
+                  ) : (
+                    <Badge tone="emerald">Sin pendientes</Badge>
+                  )}
+                  <Link
+                    href={`/beneficiarios/${beneficiario.id}/seguimientos/${s.id}/editar`}
+                    className="text-xs font-medium text-brand-800 transition hover:underline"
+                  >
+                    Editar
+                  </Link>
+                </div>
               </div>
               <p className="mt-2 font-medium text-slate-900">{s.avanceNovedad}</p>
               {s.observacion && (
@@ -262,7 +275,15 @@ export default async function FichaBeneficiarioPage({
             </div>
           ))}
         </div>
-        {beneficiario.seguimientos.length === 0 && <EmptyState>Sin seguimientos registrados.</EmptyState>}
+        {beneficiario._count.seguimientos === 0 && <EmptyState>Sin seguimientos registrados.</EmptyState>}
+        {beneficiario._count.seguimientos > 5 && (
+          <Link
+            href={`/beneficiarios/${beneficiario.id}/seguimientos`}
+            className="mt-3 inline-block text-sm font-medium text-brand-800 transition hover:underline"
+          >
+            Ver historial completo ({beneficiario._count.seguimientos}) →
+          </Link>
+        )}
       </SectionCard>
     </div>
   );

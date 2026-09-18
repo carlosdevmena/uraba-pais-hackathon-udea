@@ -37,16 +37,17 @@ Antes de crear un registro, el sistema busca por nombre, documento o código int
 
 Cada persona conserva un único código interno aunque acumule múltiples participaciones, atenciones o seguimientos. Los reportes cuentan **personas únicas** por separado de los **eventos** (participaciones, atenciones, seguimientos).
 
-## Tipos de usuario propuestos
+## Tipos de usuario e inicio de sesión
 
-El inicio de sesión y los permisos son un componente **complementario** según la guía oficial y no se implementaron en esta versión del prototipo, priorizando el flujo obligatorio. Se proponen dos tipos de usuario para una siguiente iteración:
+El inicio de sesión y los permisos son un componente **complementario** según la guía oficial; se implementaron en esta versión sobre el flujo obligatorio ya funcional, no en su lugar. Es un acceso de demostración (`/login`, con selector rápido de 1 clic para jurado/evaluadores) basado en una cookie de sesión `httpOnly` — no hay tabla de usuarios ni verificación de credenciales contra una base de datos, porque el schema del proyecto no la requiere para el alcance del reto.
 
-| Tipo de usuario | Qué vería |
+| Tipo de usuario | Qué ve |
 |---|---|
-| **Administrador** | Acceso completo: todos los módulos, incluidos los reportes agregados de todas las líneas de trabajo y la gestión del catálogo de programas. |
-| **Funcionario** | Registro y consulta de beneficiarios, familiares, vinculaciones, atenciones y seguimientos que le correspondan; sin acceso a reportes agregados globales ni a la gestión del catálogo de programas. |
+| **Administrador** | Acceso completo: `/beneficiarios` (consulta, registro, fichas) y `/reportes` (indicadores, gráfico temporal, exportación CSV, auditoría de duplicados). |
+| **Funcionario** | `/beneficiarios` (consulta, registro con familiar y atenciones, fichas); sin acceso a `/reportes`. |
+| **Público / no autenticado** | Solo la landing, la galería del proyecto, las líneas de trabajo, los logos de aliados y el marco legal — `/beneficiarios*` y `/reportes*` quedan bloqueados y redirigen a `/login`. |
 
-Ninguno de los dos roles vería datos personales en pantallas públicas o reportes agregados; ambos verían la ficha consolidada solo dentro del flujo de atención autorizado.
+El bloqueo por rol se aplica en `proxy.ts` (Next.js Proxy, ejecutado en cada request) además de ocultarse en el `NavBar`, para que no dependa únicamente de la interfaz. Ninguno de los roles ve datos personales en pantallas públicas o reportes agregados; ambos ven la ficha consolidada solo dentro del flujo de atención autorizado.
 
 ## Protección de datos y enfoque inclusivo
 
@@ -55,6 +56,14 @@ Ninguno de los dos roles vería datos personales en pantallas públicas o report
 - Los reportes se presentan de forma agregada, sin nombres ni documentos.
 - El campo de tipo de población cubre explícitamente a personas migrantes, refugiadas, desplazadas, víctimas del conflicto armado y comunidades de acogida, además de registrar discapacidad, para reflejar la diversidad del territorio de Urabá.
 
-## Componentes complementarios (no implementados, fuera del alcance mínimo)
+## Componentes complementarios implementados
 
-Acceso y roles, sección pública, inteligencia artificial, exportación de reportes y accesibilidad ampliada — priorizados solo después de que el flujo obligatorio esté completo, conforme a la guía.
+Priorizados solo después de que el flujo obligatorio quedó completo, conforme a la guía:
+
+- **Acceso y roles**: descrito arriba (Funcionario/Administrador, gate por `proxy.ts`).
+- **Sección pública**: landing, galería del proyecto y logos de aliados/financiadores visibles sin autenticación.
+- **Inteligencia artificial**: asistente de IA (`components/AiAssistant.tsx`), widget de chat flotante disponible solo con sesión iniciada. Responde preguntas en lenguaje natural usando **exclusivamente indicadores agregados** (`lib/reportes.ts` → `obtenerDatosReporte`/`obtenerSerieTemporal`) — nunca nombres, documentos ni teléfonos; ver `tests/roles/role-agent.test.ts` (caso 3.3) para la aserción automatizada de esa regla.
+- **Exportación**: `/reportes/export` genera un CSV con los mismos indicadores agregados que se ven en pantalla (nunca filas individuales de personas).
+- **Gráficos dinámicos**: `components/GraficoIngresosBeneficiarios.tsx` — curva de registros/atenciones por semana, últimos 3/6 meses o último año, calculada con `date_trunc` en Postgres.
+
+Fuera de alcance (no implementado): accesibilidad ampliada más allá de lo cubierto por defecto (contraste de color y navegación por teclado nativos de HTML/Tailwind).

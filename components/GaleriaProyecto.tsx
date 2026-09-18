@@ -8,27 +8,27 @@ import { card } from "@/components/ui";
 const LINEAS = [
   {
     titulo: "Asistencia humanitaria y protección",
-    texto: "Apartadó, Turbo y Necoclí — ayudas y orientación frente a necesidades urgentes.",
+    texto: "Apartadó, Turbo y Necoclí — orientación y registro frente a necesidades urgentes.",
     icon: HeartHandshake,
     imagen: "/galeria-asistencia-humanitaria.jpeg",
   },
   {
-    titulo: "Salud integral y psicosocial",
-    texto: "Salud, salud mental, apoyo psicosocial y salud sexual y reproductiva.",
+    titulo: "Salud y bienestar comunitario",
+    texto: "Nutrición, bienestar y apoyo mutuo en la vida cotidiana de la comunidad.",
     icon: HeartPulse,
     imagen: "/galeria-salud.jpeg",
   },
   {
-    titulo: "Integración socioeconómica",
-    texto: "Formación, empleabilidad, emprendimiento y fortalecimiento comunitario.",
+    titulo: "Integración socioeconómica y cohesión social",
+    texto: "Formación, emprendimiento y encuentros comunitarios entre distintas nacionalidades.",
     icon: Briefcase,
-    imagen: "/galeria-empleabilidad.jpeg",
+    imagen: "/galeria-integracion-socioeconomica.jpeg",
   },
   {
     titulo: "Acompañamiento familiar",
-    texto: "Cohesión social entre comunidades migrantes, desplazadas y de acogida.",
+    texto: "Visitas y seguimiento cercano a las familias en sus propios hogares.",
     icon: Users2,
-    imagen: null,
+    imagen: "/galeria-acompanamiento-familiar.jpeg",
   },
 ];
 
@@ -79,7 +79,7 @@ export default function GaleriaProyecto() {
           type="button"
           onClick={anterior}
           aria-label="Anterior"
-          className="absolute left-3 top-1/2 -translate-y-1/2 flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white/90 text-slate-600 shadow-sm hover:text-brand-700"
+          className="absolute left-3 top-3 flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white/90 text-slate-600 shadow-sm transition hover:bg-white hover:text-brand-700"
         >
           <ChevronLeft size={18} />
         </button>
@@ -87,7 +87,7 @@ export default function GaleriaProyecto() {
           type="button"
           onClick={siguiente}
           aria-label="Siguiente"
-          className="absolute right-3 top-1/2 -translate-y-1/2 flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white/90 text-slate-600 shadow-sm hover:text-brand-700"
+          className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white/90 text-slate-600 shadow-sm transition hover:bg-white hover:text-brand-700"
         >
           <ChevronRight size={18} />
         </button>
@@ -100,7 +100,7 @@ export default function GaleriaProyecto() {
             type="button"
             onClick={() => setIndice(i)}
             aria-label={`Ir a ${l.titulo}`}
-            className={`h-2 rounded-full transition-all ${
+            className={`h-2 rounded-full transition-all hover:bg-brand-400 ${
               i === indice ? "w-6 bg-brand-700" : "w-2 bg-slate-300"
             }`}
           />

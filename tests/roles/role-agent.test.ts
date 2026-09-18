@@ -15,12 +15,16 @@ vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 import { prisma } from "@/lib/prisma";
 import {
   actualizarEstadoParticipacion,
+  actualizarSeguimiento,
   buscarCoincidenciasDifusas,
   crearBeneficiario,
+  finalizarSeguimiento,
   registrarAtencion,
   registrarSeguimiento,
   vincularPrograma,
 } from "@/app/beneficiarios/actions";
+import { obtenerIndicadoresAgregados } from "@/app/reportes/ai-actions";
+import { ROLES } from "@/app/login/roles";
 
 const PREFIJO = "Zzqa ";
 
@@ -62,7 +66,7 @@ describe("Rol 1: Funcionario / Operador de campo", () => {
     expect(creado?.familiares[0].nombres).toBe("Familiar De Prueba");
   });
 
-  it("1.2 el registro sin familiar es válido (no es obligatorio según la guía oficial)", async () => {
+  it("1.2 rechaza el registro sin familiar (obligatorio: mínimo 1 integrante)", async () => {
     const nombre = `${PREFIJO}Sin Familiar`;
     const resultado = await crearBeneficiario(
       {},
@@ -76,13 +80,34 @@ describe("Rol 1: Funcionario / Operador de campo", () => {
       })
     );
 
-    expect(resultado?.error).toBeUndefined();
+    expect(resultado?.fieldErrors?.familiar).toBeDefined();
+    const creado = await prisma.beneficiario.findFirst({ where: { nombres: nombre } });
+    expect(creado).toBeNull();
+  });
+
+  it("1.2b acepta el registro con familiar y parentesco válidos", async () => {
+    const nombre = `${PREFIJO}Con Familiar Valido`;
+    const resultado = await crearBeneficiario(
+      {},
+      fd({
+        nombres: nombre,
+        tipoPoblacion: "otro",
+        genero: "Masculino",
+        municipio: "Turbo",
+        edadAproximada: "25",
+        autorizacionDatos: "on",
+        familiarNombres: "Familiar Valido",
+        familiarParentescos: "Madre",
+      })
+    );
+
+    expect(resultado?.fieldErrors).toBeUndefined();
     const creado = await prisma.beneficiario.findFirst({
       where: { nombres: nombre },
       include: { familiares: true },
     });
     expect(creado).not.toBeNull();
-    expect(creado?.familiares).toHaveLength(0);
+    expect(creado?.familiares).toHaveLength(1);
   });
 
   it("1.3 detección difusa por trigramas encuentra coincidencias con score >= 0.4", async () => {
@@ -90,6 +115,26 @@ describe("Rol 1: Funcionario / Operador de campo", () => {
     const coincidencias = await buscarCoincidenciasDifusas("Mariana Cordoba Valencia");
     expect(coincidencias.length).toBeGreaterThan(0);
     expect(coincidencias[0].score).toBeGreaterThanOrEqual(0.4);
+  });
+
+  it("1.3b ISO 25010 desempeño temporal: la consulta de trigramas ejecuta en <50ms dentro de Postgres", async () => {
+    // Se mide con EXPLAIN ANALYZE (tiempo de ejecución reportado por el propio
+    // motor) en vez de wall-clock del cliente, para no incluir la latencia de
+    // red hacia el pooler de Supabase (aws sa-east-1) en el indicador de
+    // "desempeño temporal" de la operación.
+    const texto = "Mariana Cordoba Valencia";
+    const umbral = 0.4; // debe coincidir con UMBRAL_COINCIDENCIA_DIFUSA en actions.ts
+    const filas = await prisma.$queryRaw<{ "QUERY PLAN": [{ "Execution Time": number }] }[]>`
+      EXPLAIN (ANALYZE, FORMAT JSON)
+      SELECT id, "codigoInterno" AS "codigoInterno", nombres, municipio,
+             similarity(nombres, ${texto}) AS score
+      FROM "Beneficiario"
+      WHERE similarity(nombres, ${texto}) > ${umbral}
+      ORDER BY score DESC
+      LIMIT 5
+    `;
+    const tiempoEjecucionMs = filas[0]["QUERY PLAN"][0]["Execution Time"];
+    expect(tiempoEjecucionMs).toBeLessThan(50);
   });
 
   it("1.4 asocia una atención y un seguimiento pendiente a la ficha", async () => {
@@ -103,6 +148,8 @@ describe("Rol 1: Funcionario / Operador de campo", () => {
         municipio: "Necoclí",
         edadAproximada: "40",
         autorizacionDatos: "on",
+        familiarNombres: "Familiar De Prueba",
+        familiarParentescos: "Hijo/a",
       })
     );
     const beneficiario = await prisma.beneficiario.findFirstOrThrow({ where: { nombres: nombre } });
@@ -136,6 +183,56 @@ describe("Rol 1: Funcionario / Operador de campo", () => {
     expect(conRelaciones?.seguimientos).toHaveLength(1);
     expect(conRelaciones?.seguimientos[0].accionPendiente).not.toBeNull();
   });
+
+  it("1.5 edita un seguimiento y lo finaliza (limpia la acción pendiente)", async () => {
+    const nombre = `${PREFIJO}Seguimiento Editable`;
+    await crearBeneficiario(
+      {},
+      fd({
+        nombres: nombre,
+        tipoPoblacion: "retornado",
+        genero: "Masculino",
+        municipio: "Apartadó",
+        edadAproximada: "33",
+        autorizacionDatos: "on",
+        familiarNombres: "Familiar De Prueba",
+        familiarParentescos: "Hijo/a",
+      })
+    );
+    const beneficiario = await prisma.beneficiario.findFirstOrThrow({ where: { nombres: nombre } });
+
+    const enUnaSemana = new Date(Date.now() + 7 * 86_400_000).toISOString().slice(0, 10);
+    await registrarSeguimiento(
+      {},
+      fd({
+        beneficiarioId: beneficiario.id,
+        avanceNovedad: "Primer contacto",
+        accionPendiente: "Confirmar dirección",
+        proximoContacto: enUnaSemana,
+      })
+    );
+    const seguimiento = await prisma.seguimiento.findFirstOrThrow({ where: { beneficiarioId: beneficiario.id } });
+
+    await actualizarSeguimiento(
+      {},
+      fd({
+        seguimientoId: seguimiento.id,
+        beneficiarioId: beneficiario.id,
+        avanceNovedad: "Primer contacto (editado)",
+        accionPendiente: "Confirmar dirección",
+        proximoContacto: enUnaSemana,
+      })
+    );
+    const editado = await prisma.seguimiento.findUniqueOrThrow({ where: { id: seguimiento.id } });
+    expect(editado.avanceNovedad).toBe("Primer contacto (editado)");
+    expect(editado.accionPendiente).not.toBeNull();
+
+    const formFinalizar = fd({ seguimientoId: seguimiento.id, beneficiarioId: beneficiario.id });
+    await finalizarSeguimiento(formFinalizar);
+    const finalizado = await prisma.seguimiento.findUniqueOrThrow({ where: { id: seguimiento.id } });
+    expect(finalizado.accionPendiente).toBeNull();
+    expect(finalizado.proximoContacto).toBeNull();
+  });
 });
 
 describe("Rol 2: Administrador / Coordinador del proyecto", () => {
@@ -159,6 +256,8 @@ describe("Rol 2: Administrador / Coordinador del proyecto", () => {
         municipio: "Apartadó",
         edadAproximada: "35",
         autorizacionDatos: "on",
+        familiarNombres: "Familiar De Prueba",
+        familiarParentescos: "Hijo/a",
       })
     );
     const beneficiario = await prisma.beneficiario.findFirstOrThrow({ where: { nombres: nombre } });
@@ -195,6 +294,8 @@ describe("Rol 2: Administrador / Coordinador del proyecto", () => {
         municipio: "Turbo",
         edadAproximada: "28",
         autorizacionDatos: "on",
+        familiarNombres: "Familiar De Prueba",
+        familiarParentescos: "Hijo/a",
       })
     );
     const beneficiario = await prisma.beneficiario.findFirstOrThrow({ where: { nombres: nombre } });
@@ -221,6 +322,14 @@ describe("Rol 3: Analista / Auditor M&E", () => {
     expect(totalAtenciones).toBeGreaterThanOrEqual(0);
   });
 
+  it("3.1b la matriz de roles del sistema es exactamente Funcionario/Administrador", () => {
+    // La guía oficial del jurado define únicamente estos dos roles
+    // autenticables (más el estado público/no autenticado, que no requiere
+    // sesión). Este test falla si alguien reintroduce un rol adicional sin
+    // actualizar la matriz de permisos en proxy.ts.
+    expect([...ROLES].sort()).toEqual(["administrador", "funcionario"]);
+  });
+
   it("3.2 los agregados de reportes no exponen PII (nombres, documento, teléfono)", async () => {
     const porPoblacion = await prisma.beneficiario.groupBy({
       by: ["tipoPoblacion"],
@@ -232,6 +341,15 @@ describe("Rol 3: Analista / Auditor M&E", () => {
       expect(claves).not.toContain("numeroDocumento");
       expect(claves).not.toContain("telefono");
     }
+  });
+
+  it("3.3 los indicadores para el asistente de IA no exponen PII (sin llamar a la API real)", async () => {
+    const indicadores = await obtenerIndicadoresAgregados();
+    const json = JSON.stringify(indicadores);
+    expect(json).not.toMatch(/nombres/i);
+    expect(json).not.toMatch(/numeroDocumento/i);
+    expect(json).not.toMatch(/telefono/i);
+    expect(indicadores.beneficiariosUnicos).toBeGreaterThan(0);
   });
 });
 

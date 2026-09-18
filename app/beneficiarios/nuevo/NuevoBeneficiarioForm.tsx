@@ -2,9 +2,11 @@
 
 import { useActionState, useState } from "react";
 import Link from "next/link";
-import { AlertTriangle, IdCard, Users, ShieldCheck, ArrowRight, SearchCheck } from "lucide-react";
+import { IdCard, Users, ShieldCheck, ArrowRight, SearchCheck } from "lucide-react";
 import { crearBeneficiario, type ActionState } from "../actions";
 import { buttonPrimary, buttonSecondary, card, inputClass } from "@/components/ui";
+import Toast from "@/components/Toast";
+import ModalTratamientoDatos from "@/components/ModalTratamientoDatos";
 
 const initialState: ActionState = {};
 
@@ -33,20 +35,28 @@ const HACE_120_ANIOS = new Date(new Date().setFullYear(new Date().getFullYear() 
   .toISOString()
   .slice(0, 10);
 
+function ErrorCampo({ mensaje }: { mensaje?: string }) {
+  if (!mensaje) return null;
+  return <span className="mt-1 text-xs font-semibold text-rose-600">{mensaje}</span>;
+}
+
 function Campo({
   label,
   hint,
+  error,
   children,
 }: {
   label: string;
   hint?: string;
+  error?: string;
   children: React.ReactNode;
 }) {
   return (
     <label className="flex flex-col gap-1 text-sm">
       <span className="font-medium text-slate-700">{label}</span>
       {children}
-      {hint && <span className="text-xs text-slate-500">{hint}</span>}
+      {hint && !error && <span className="text-xs text-slate-500">{hint}</span>}
+      <ErrorCampo mensaje={error} />
     </label>
   );
 }
@@ -60,29 +70,21 @@ function FieldsetHeader({ icon, title }: { icon: React.ReactNode; title: string 
   );
 }
 
+function claseCampo(tieneError: boolean) {
+  return tieneError ? `${inputClass} border-rose-500 ring-2 ring-rose-100 animate-shake` : inputClass;
+}
+
 export default function NuevoBeneficiarioForm() {
   const [state, formAction, pending] = useActionState(crearBeneficiario, initialState);
   const [tieneDocumento, setTieneDocumento] = useState(false);
   const [tieneDiscapacidad, setTieneDiscapacidad] = useState(false);
+  const [modalAbierto, setModalAbierto] = useState(false);
+  const errores = state.fieldErrors ?? {};
 
   return (
     <form action={formAction} className="flex flex-col gap-6">
-      {state.error && (
-        <div className="flex items-start gap-3 rounded-xl border border-orange-200 bg-orange-50 px-4 py-3 text-sm text-orange-800">
-          <AlertTriangle size={18} className="mt-0.5 shrink-0" />
-          <div>
-            <p>{state.error}</p>
-            {state.duplicadoId && (
-              <Link
-                href={`/beneficiarios/${state.duplicadoId}`}
-                className="mt-1 inline-flex items-center gap-1 font-medium underline"
-              >
-                Abrir ficha existente <ArrowRight size={14} />
-              </Link>
-            )}
-          </div>
-        </div>
-      )}
+      <Toast data={state.toast ?? null} />
+      <ModalTratamientoDatos abierto={modalAbierto} onCerrar={() => setModalAbierto(false)} />
 
       {state.coincidenciasDifusas && state.coincidenciasDifusas.length > 0 && (
         <div className="flex flex-col gap-3 rounded-xl border border-orange-200 bg-orange-50 px-4 py-3 text-sm text-orange-800">
@@ -125,7 +127,7 @@ export default function NuevoBeneficiarioForm() {
       <fieldset className={`grid gap-4 ${card} p-5 sm:grid-cols-2 sm:p-6`}>
         <FieldsetHeader icon={<IdCard size={16} />} title="Datos del beneficiario" />
 
-        <Campo label="Nombres completos *">
+        <Campo label="Nombres completos *" error={errores.nombres}>
           <input
             name="nombres"
             required
@@ -133,15 +135,16 @@ export default function NuevoBeneficiarioForm() {
             maxLength={100}
             pattern="[A-Za-zÁÉÍÓÚÑÜáéíóúñü'\-\s]+"
             title="Solo letras y espacios"
-            className={inputClass}
+            className={claseCampo(!!errores.nombres)}
           />
         </Campo>
 
         <Campo
           label="Tipo de población *"
           hint="Define el enfoque diferencial de atención según su situación migratoria o social."
+          error={errores.tipoPoblacion}
         >
-          <select name="tipoPoblacion" required defaultValue="" className={inputClass}>
+          <select name="tipoPoblacion" required defaultValue="" className={claseCampo(!!errores.tipoPoblacion)}>
             <option value="" disabled>
               Selecciona una opción...
             </option>
@@ -172,26 +175,38 @@ export default function NuevoBeneficiarioForm() {
           </select>
         </Campo>
 
-        <Campo label={`Número de documento${tieneDocumento ? " *" : ""}`}>
+        <Campo label={`Número de documento${tieneDocumento ? " *" : ""}`} error={errores.numeroDocumento}>
           <input
             name="numeroDocumento"
             required={tieneDocumento}
             pattern="[A-Za-z0-9\-]{4,15}"
             title="Alfanumérico, entre 4 y 15 caracteres (se permite guion)"
-            className={inputClass}
+            className={claseCampo(!!errores.numeroDocumento)}
           />
         </Campo>
 
-        <Campo label="Fecha de nacimiento (o edad aproximada) *">
-          <input type="date" name="fechaNacimiento" max={HOY} min={HACE_120_ANIOS} className={inputClass} />
+        <Campo label="Fecha de nacimiento (o edad aproximada) *" error={errores.fechaNacimiento}>
+          <input
+            type="date"
+            name="fechaNacimiento"
+            max={HOY}
+            min={HACE_120_ANIOS}
+            className={claseCampo(!!errores.fechaNacimiento)}
+          />
         </Campo>
 
-        <Campo label="Edad aproximada (si no se conoce la fecha)">
-          <input type="number" name="edadAproximada" min={0} max={120} className={inputClass} />
+        <Campo label="Edad aproximada (si no se conoce la fecha)" error={errores.edadAproximada}>
+          <input
+            type="number"
+            name="edadAproximada"
+            min={0}
+            max={120}
+            className={claseCampo(!!errores.edadAproximada)}
+          />
         </Campo>
 
-        <Campo label="Género *">
-          <select name="genero" required defaultValue="" className={inputClass}>
+        <Campo label="Género *" error={errores.genero}>
+          <select name="genero" required defaultValue="" className={claseCampo(!!errores.genero)}>
             <option value="" disabled>
               Selecciona una opción...
             </option>
@@ -202,8 +217,8 @@ export default function NuevoBeneficiarioForm() {
           </select>
         </Campo>
 
-        <Campo label="Municipio *">
-          <select name="municipio" required defaultValue="" className={inputClass}>
+        <Campo label="Municipio *" error={errores.municipio}>
+          <select name="municipio" required defaultValue="" className={claseCampo(!!errores.municipio)}>
             <option value="" disabled>
               Seleccionar...
             </option>
@@ -215,13 +230,13 @@ export default function NuevoBeneficiarioForm() {
           </select>
         </Campo>
 
-        <Campo label="Teléfono de contacto">
+        <Campo label="Teléfono de contacto" error={errores.telefono}>
           <input
             type="tel"
             name="telefono"
             pattern="\+?[0-9]{7,15}"
             title="Entre 7 y 15 dígitos, opcionalmente con + al inicio"
-            className={inputClass}
+            className={claseCampo(!!errores.telefono)}
           />
         </Campo>
 
@@ -237,13 +252,13 @@ export default function NuevoBeneficiarioForm() {
           </label>
           {tieneDiscapacidad && (
             <div className="mt-3 max-w-sm">
-              <Campo label="¿Qué tipo de discapacidad? *">
+              <Campo label="¿Qué tipo de discapacidad? *" error={errores.tipoDiscapacidad}>
                 <input
                   name="tipoDiscapacidad"
                   list="tipos-discapacidad"
                   required={tieneDiscapacidad}
                   placeholder="Selecciona una opción o escribe la tuya..."
-                  className={inputClass}
+                  className={claseCampo(!!errores.tipoDiscapacidad)}
                 />
                 <datalist id="tipos-discapacidad">
                   {TIPOS_DISCAPACIDAD.map((t) => (
@@ -257,26 +272,43 @@ export default function NuevoBeneficiarioForm() {
       </fieldset>
 
       <fieldset className={`grid gap-4 ${card} p-5 sm:grid-cols-2 sm:p-6`}>
-        <FieldsetHeader icon={<Users size={16} />} title="Núcleo familiar (opcional, hasta 2 integrantes)" />
+        <FieldsetHeader icon={<Users size={16} />} title="Núcleo familiar *" />
         <p className="-mt-2 text-xs text-slate-500 sm:col-span-2">
-          Registrar al menos un integrante ayuda a contextualizar la situación familiar, pero no es
-          obligatorio para completar el registro.
+          Registra al menos un integrante del núcleo familiar con nombre y parentesco.
         </p>
-        {[0, 1].map((i) => (
-          <div key={i} className="grid grid-cols-2 gap-2 sm:col-span-2 sm:grid-cols-[1fr_1fr]">
-            <Campo label={`Nombre del familiar ${i + 1}`}>
-              <input
-                name="familiarNombres"
-                pattern="[A-Za-zÁÉÍÓÚÑÜáéíóúñü'\-\s]*"
-                title="Solo letras y espacios"
-                className={inputClass}
-              />
-            </Campo>
-            <Campo label="Parentesco">
-              <input name="familiarParentescos" placeholder="Hijo/a, cónyuge, etc." className={inputClass} />
-            </Campo>
-          </div>
-        ))}
+        <div className="grid grid-cols-2 gap-2 sm:col-span-2 sm:grid-cols-[1fr_1fr]">
+          <Campo label="Nombre del familiar 1 *">
+            <input
+              name="familiarNombres"
+              required
+              pattern="[A-Za-zÁÉÍÓÚÑÜáéíóúñü'\-\s]+"
+              title="Solo letras y espacios"
+              className={claseCampo(!!errores.familiar)}
+            />
+          </Campo>
+          <Campo label="Parentesco *">
+            <input
+              name="familiarParentescos"
+              required
+              placeholder="Hijo/a, cónyuge, etc."
+              className={claseCampo(!!errores.familiar)}
+            />
+          </Campo>
+        </div>
+        <ErrorCampo mensaje={errores.familiar} />
+        <div className="grid grid-cols-2 gap-2 sm:col-span-2 sm:grid-cols-[1fr_1fr]">
+          <Campo label="Nombre del familiar 2 (opcional)">
+            <input
+              name="familiarNombres"
+              pattern="[A-Za-zÁÉÍÓÚÑÜáéíóúñü'\-\s]*"
+              title="Solo letras y espacios"
+              className={inputClass}
+            />
+          </Campo>
+          <Campo label="Parentesco">
+            <input name="familiarParentescos" placeholder="Hijo/a, cónyuge, etc." className={inputClass} />
+          </Campo>
+        </div>
       </fieldset>
 
       <fieldset className={`${card} p-5 sm:p-6`}>
@@ -289,10 +321,18 @@ export default function NuevoBeneficiarioForm() {
             className="mt-0.5 h-4 w-4 rounded border-slate-300 text-brand-700 focus:ring-brand-400"
           />
           <span>
-            La persona autoriza el tratamiento de sus datos personales para fines de
-            registro, seguimiento y generación de reportes agregados del proyecto. *
+            La persona autoriza el tratamiento de sus datos personales para fines de registro,
+            seguimiento y generación de reportes agregados del proyecto. *{" "}
+            <button
+              type="button"
+              onClick={() => setModalAbierto(true)}
+              className="font-medium text-brand-700 underline underline-offset-2 hover:text-brand-800"
+            >
+              Leer aquí
+            </button>
           </span>
         </label>
+        <ErrorCampo mensaje={errores.autorizacionDatos} />
       </fieldset>
 
       <div className="flex justify-end gap-3">
@@ -301,6 +341,7 @@ export default function NuevoBeneficiarioForm() {
         </Link>
         <button type="submit" disabled={pending} className={buttonPrimary}>
           {pending ? "Guardando..." : "Registrar beneficiario"}
+          {!pending && <ArrowRight size={16} />}
         </button>
       </div>
     </form>

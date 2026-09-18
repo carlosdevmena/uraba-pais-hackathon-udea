@@ -1,8 +1,14 @@
 import Link from "next/link";
-import { Prisma, TipoPoblacion } from "@prisma/client";
-import { Users, HeartHandshake, ClipboardList, Filter, MapPin, X, ShieldCheck } from "lucide-react";
-import { prisma } from "@/lib/prisma";
+import { Users, HeartHandshake, ClipboardList, Filter, MapPin, X, ShieldCheck, Download } from "lucide-react";
 import { Badge, card, inputClass } from "@/components/ui";
+import GraficoIngresosBeneficiarios from "@/components/GraficoIngresosBeneficiarios";
+import {
+  obtenerDatosReporte,
+  obtenerSerieTemporal,
+  RANGOS_TEMPORALES,
+  type FiltrosReporte,
+  type RangoTemporal,
+} from "@/lib/reportes";
 
 export const dynamic = "force-dynamic";
 
@@ -24,59 +30,6 @@ const ETIQUETAS_ESTADO: Record<string, string> = {
 };
 
 const MUNICIPIOS = ["Apartadó", "Turbo", "Necoclí", "Otro"];
-
-type FiltrosReporte = {
-  municipio?: string;
-  poblacion?: string;
-  programa?: string;
-  desde?: string;
-  hasta?: string;
-};
-
-function construirFiltroBeneficiario(filtros: FiltrosReporte): Prisma.BeneficiarioWhereInput {
-  const where: Prisma.BeneficiarioWhereInput = {};
-  if (filtros.municipio) where.municipio = filtros.municipio;
-  if (filtros.poblacion && Object.values(TipoPoblacion).includes(filtros.poblacion as TipoPoblacion)) {
-    where.tipoPoblacion = filtros.poblacion as TipoPoblacion;
-  }
-  if (filtros.programa) where.participaciones = { some: { programaId: filtros.programa } };
-  if (filtros.desde || filtros.hasta) {
-    where.createdAt = {};
-    if (filtros.desde) where.createdAt.gte = new Date(filtros.desde);
-    if (filtros.hasta) {
-      const hasta = new Date(filtros.hasta);
-      hasta.setHours(23, 59, 59, 999);
-      where.createdAt.lte = hasta;
-    }
-  }
-  return where;
-}
-
-// Mismo filtro que construirFiltroBeneficiario, como fragmento SQL — usado por
-// la auditoría de consolidación, que agrega por persona a través de 3 tablas
-// (algo que un groupBy de Prisma sobre un solo modelo no puede expresar).
-// Se calcula siempre en Postgres, nunca cargando beneficiarios a un arreglo
-// de JavaScript, para escalar de forma segura a los 11k-30k registros
-// proyectados (ISO/IEC 25010 — eficiencia de desempeño).
-function construirFiltroSql(filtros: FiltrosReporte): Prisma.Sql {
-  const condiciones: Prisma.Sql[] = [];
-  if (filtros.municipio) condiciones.push(Prisma.sql`b.municipio = ${filtros.municipio}`);
-  if (filtros.poblacion && Object.values(TipoPoblacion).includes(filtros.poblacion as TipoPoblacion)) {
-    condiciones.push(Prisma.sql`b."tipoPoblacion" = ${filtros.poblacion}::"TipoPoblacion"`);
-  }
-  if (filtros.programa) {
-    condiciones.push(
-      Prisma.sql`EXISTS (SELECT 1 FROM "Participacion" pp WHERE pp."beneficiarioId" = b.id AND pp."programaId" = ${filtros.programa})`
-    );
-  }
-  if (filtros.desde) condiciones.push(Prisma.sql`b."createdAt" >= ${new Date(filtros.desde)}`);
-  if (filtros.hasta) {
-    const hasta = new Date(filtros.hasta);
-    hasta.setHours(23, 59, 59, 999);
-    condiciones.push(Prisma.sql`b."createdAt" <= ${hasta}`);
-  }
-  return condiciones.length > 0 ? Prisma.sql`WHERE ${Prisma.join(condiciones, " AND ")}` : Prisma.empty;
-}
 
 function TarjetaIndicador({
   titulo,
@@ -146,99 +99,38 @@ export default async function ReportesPage({
     hasta: filtrosCrudos.hasta || undefined,
   };
   const hayFiltrosActivos = Object.values(filtros).some(Boolean);
-  const filtroBeneficiario = construirFiltroBeneficiario(filtros);
 
-  const filtroSql = construirFiltroSql(filtros);
-
-  const [
-    beneficiariosUnicos,
-    atencionesRegistradas,
-    participacionesTotal,
-    seguimientosTotal,
-    seguimientosPendientes,
-    participacionesPorPrograma,
-    participacionesPorEstado,
-    beneficiariosPorPoblacion,
-    beneficiariosPorMunicipio,
-    programas,
-    fichasConsolidadasRaw,
-  ] = await Promise.all([
-    prisma.beneficiario.count({ where: filtroBeneficiario }),
-    prisma.atencion.count({ where: { beneficiario: filtroBeneficiario } }),
-    prisma.participacion.count({ where: { beneficiario: filtroBeneficiario } }),
-    prisma.seguimiento.count({ where: { beneficiario: filtroBeneficiario } }),
-    prisma.seguimiento.count({
-      where: { accionPendiente: { not: null }, beneficiario: filtroBeneficiario },
-    }),
-    prisma.participacion.groupBy({
-      by: ["programaId"],
-      where: { beneficiario: filtroBeneficiario },
-      _count: { _all: true },
-    }),
-    prisma.participacion.groupBy({
-      by: ["estado"],
-      where: { beneficiario: filtroBeneficiario },
-      _count: { _all: true },
-    }),
-    prisma.beneficiario.groupBy({
-      by: ["tipoPoblacion"],
-      where: filtroBeneficiario,
-      _count: { _all: true },
-    }),
-    prisma.beneficiario.groupBy({
-      by: ["municipio"],
-      where: filtroBeneficiario,
-      _count: { _all: true },
-    }),
-    prisma.programa.findMany(),
-    // Agregado directamente en Postgres (GROUP BY sobre las 3 tablas de eventos),
-    // acotado con LIMIT — nunca carga los beneficiarios completos a JavaScript.
-    prisma.$queryRaw<{ codigoInterno: string; totalEventos: bigint; lineas: string[] | null }[]>`
-      SELECT b."codigoInterno" AS "codigoInterno",
-             COUNT(e.*)::int AS "totalEventos",
-             ARRAY(
-               SELECT DISTINCT pr."lineaTrabajo"::text
-               FROM "Participacion" pp2
-               JOIN "Programa" pr ON pr.id = pp2."programaId"
-               WHERE pp2."beneficiarioId" = b.id
-             ) AS lineas
-      FROM "Beneficiario" b
-      JOIN (
-        SELECT "beneficiarioId" FROM "Participacion"
-        UNION ALL
-        SELECT "beneficiarioId" FROM "Atencion"
-        UNION ALL
-        SELECT "beneficiarioId" FROM "Seguimiento"
-      ) e ON e."beneficiarioId" = b.id
-      ${filtroSql}
-      GROUP BY b.id, b."codigoInterno"
-      HAVING COUNT(e.*) > 1
-      ORDER BY "totalEventos" DESC
-      LIMIT 10
-    `,
+  const rangos = Object.keys(RANGOS_TEMPORALES) as RangoTemporal[];
+  const [datos, ...seriesPorRango] = await Promise.all([
+    obtenerDatosReporte(filtros),
+    ...rangos.map((r) => obtenerSerieTemporal(r)),
   ]);
+  const series = Object.fromEntries(rangos.map((r, i) => [r, seriesPorRango[i]])) as Record<
+    RangoTemporal,
+    Awaited<ReturnType<typeof obtenerSerieTemporal>>
+  >;
 
-  const nombrePrograma = new Map(programas.map((p) => [p.id, p.nombre]));
-
-  // Auditoría de deduplicación: eventos reales (participaciones + atenciones +
-  // seguimientos) frente a personas únicas, con cifras reales de esta base
-  // (no una cifra de referencia externa) — evidencia del principio de ficha única.
-  const eventosTotales = participacionesTotal + atencionesRegistradas + seguimientosTotal;
-  const promedioEventos = beneficiariosUnicos > 0 ? eventosTotales / beneficiariosUnicos : 0;
-  const fichasConsolidadas = fichasConsolidadasRaw.map((f) => ({
-    codigoInterno: f.codigoInterno,
-    totalEventos: Number(f.totalEventos),
-    lineas: f.lineas ?? [],
-  }));
+  const queryExport = new URLSearchParams(
+    Object.entries(filtros).filter((entry): entry is [string, string] => Boolean(entry[1]))
+  ).toString();
 
   return (
     <div className="flex flex-col gap-6">
-      <div>
-        <h1 className="text-xl font-semibold text-slate-900">Reportes e indicadores</h1>
-        <p className="mt-1 text-sm text-slate-500">
-          Datos agregados, calculados en tiempo real a partir de la información registrada.
-          No se muestran nombres ni documentos.
-        </p>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h1 className="text-xl font-semibold text-slate-900">Reportes e indicadores</h1>
+          <p className="mt-1 text-sm text-slate-500">
+            Datos agregados, calculados en tiempo real a partir de la información registrada.
+            No se muestran nombres ni documentos.
+          </p>
+        </div>
+        <Link
+          href={`/reportes/export${queryExport ? `?${queryExport}` : ""}`}
+          className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-brand-200 hover:bg-brand-50/60 hover:text-brand-800"
+        >
+          <Download size={15} />
+          Descargar reporte (CSV)
+        </Link>
       </div>
 
       <form className={`${card} flex flex-col gap-3 p-4`}>
@@ -273,7 +165,7 @@ export default async function ReportesPage({
             <span className="font-medium text-slate-600">Programa</span>
             <select name="programa" defaultValue={filtros.programa ?? ""} className={inputClass}>
               <option value="">Todos</option>
-              {programas.map((p) => (
+              {datos.programas.map((p) => (
                 <option key={p.id} value={p.id}>
                   {p.nombre}
                 </option>
@@ -290,12 +182,18 @@ export default async function ReportesPage({
           </label>
         </div>
         <div className="flex items-center gap-3">
-          <button type="submit" className="inline-flex items-center gap-1.5 rounded-lg bg-brand-700 px-4 py-2 text-sm font-medium text-white hover:bg-brand-800">
+          <button
+            type="submit"
+            className="inline-flex items-center gap-1.5 rounded-lg bg-brand-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-brand-800"
+          >
             <Filter size={14} />
             Aplicar filtros
           </button>
           {hayFiltrosActivos && (
-            <Link href="/reportes" className="inline-flex items-center gap-1 text-sm font-medium text-slate-500 hover:text-slate-800">
+            <Link
+              href="/reportes"
+              className="inline-flex items-center gap-1 text-sm font-medium text-slate-500 transition hover:text-slate-800"
+            >
               <X size={14} />
               Limpiar
             </Link>
@@ -303,51 +201,53 @@ export default async function ReportesPage({
         </div>
       </form>
 
-      {hayFiltrosActivos && beneficiariosUnicos === 0 && (
+      {hayFiltrosActivos && datos.beneficiariosUnicos === 0 && (
         <div className="rounded-lg border border-dashed border-slate-200 bg-slate-50/60 px-4 py-6 text-center text-sm text-slate-400">
           Ningún beneficiario coincide con estos filtros.
         </div>
       )}
 
       <div className="grid gap-4 sm:grid-cols-3">
-        <TarjetaIndicador titulo="Beneficiarios únicos" valor={beneficiariosUnicos} icon={Users} />
+        <TarjetaIndicador titulo="Beneficiarios únicos" valor={datos.beneficiariosUnicos} icon={Users} />
         <TarjetaIndicador
           titulo="Atenciones o ayudas registradas"
-          valor={atencionesRegistradas}
+          valor={datos.atencionesRegistradas}
           icon={HeartHandshake}
         />
         <TarjetaIndicador
           titulo="Seguimientos con acción pendiente"
-          valor={seguimientosPendientes}
+          valor={datos.seguimientosPendientes}
           icon={ClipboardList}
         />
       </div>
 
+      <GraficoIngresosBeneficiarios series={series} />
+
       <div className="grid gap-4 sm:grid-cols-2">
         <TablaDistribucion
           titulo="Participaciones por programa"
-          filas={participacionesPorPrograma.map((p) => ({
-            etiqueta: nombrePrograma.get(p.programaId) ?? "Programa",
+          filas={datos.participacionesPorPrograma.map((p) => ({
+            etiqueta: datos.nombrePrograma.get(p.programaId) ?? "Programa",
             valor: p._count._all,
           }))}
         />
         <TablaDistribucion
           titulo="Participaciones por estado"
-          filas={participacionesPorEstado.map((p) => ({
+          filas={datos.participacionesPorEstado.map((p) => ({
             etiqueta: ETIQUETAS_ESTADO[p.estado] ?? p.estado,
             valor: p._count._all,
           }))}
         />
         <TablaDistribucion
           titulo="Beneficiarios por tipo de población"
-          filas={beneficiariosPorPoblacion.map((p) => ({
+          filas={datos.beneficiariosPorPoblacion.map((p) => ({
             etiqueta: ETIQUETAS_POBLACION[p.tipoPoblacion] ?? p.tipoPoblacion,
             valor: p._count._all,
           }))}
         />
         <TablaDistribucion
           titulo="Beneficiarios por municipio"
-          filas={beneficiariosPorMunicipio.map((p) => ({
+          filas={datos.beneficiariosPorMunicipio.map((p) => ({
             etiqueta: p.municipio ?? "Sin municipio",
             valor: p._count._all,
           }))}
@@ -365,10 +265,10 @@ export default async function ReportesPage({
         </p>
         <div className="mt-4 grid gap-3 sm:grid-cols-4">
           {[
-            { label: "Beneficiarios únicos", valor: beneficiariosUnicos },
-            { label: "Eventos totales registrados", valor: eventosTotales },
-            { label: "Eventos por beneficiario (prom.)", valor: promedioEventos.toFixed(1) },
-            { label: "Fichas con múltiples eventos", valor: fichasConsolidadas.length },
+            { label: "Beneficiarios únicos", valor: datos.beneficiariosUnicos },
+            { label: "Eventos totales registrados", valor: datos.eventosTotales },
+            { label: "Eventos por beneficiario (prom.)", valor: datos.promedioEventos.toFixed(1) },
+            { label: "Fichas con múltiples eventos", valor: datos.fichasConsolidadas.length },
           ].map((m) => (
             <div key={m.label} className="rounded-lg border border-slate-200 bg-slate-50/60 p-3">
               <p className="text-xs text-slate-500">{m.label}</p>
@@ -377,7 +277,7 @@ export default async function ReportesPage({
           ))}
         </div>
 
-        {fichasConsolidadas.length > 0 ? (
+        {datos.fichasConsolidadas.length > 0 ? (
           <div className="mt-4 overflow-x-auto">
             <table className="w-full min-w-[480px] text-sm">
               <thead className="text-left text-xs uppercase tracking-wide text-slate-400">
@@ -389,7 +289,7 @@ export default async function ReportesPage({
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {fichasConsolidadas.map((b) => (
+                {datos.fichasConsolidadas.map((b) => (
                   <tr key={b.codigoInterno}>
                     <td className="py-2 pr-4 font-mono text-xs text-slate-600">{b.codigoInterno}</td>
                     <td className="py-2 pr-4 text-slate-800">{b.totalEventos}</td>

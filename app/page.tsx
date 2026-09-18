@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { UserPlus, Search, BarChart3, ClipboardCheck, Link2, HeartHandshake, ArrowRight } from "lucide-react";
+import Image from "next/image";
+import { UserPlus, Search, ClipboardCheck, Link2, HeartHandshake, ArrowRight } from "lucide-react";
 import { buttonPrimary, buttonSecondary, card } from "@/components/ui";
 import GaleriaProyecto from "@/components/GaleriaProyecto";
 
@@ -38,17 +39,17 @@ export default function Home() {
                 <Search size={16} />
                 Buscar / consultar
               </Link>
-              <Link href="/reportes" className={buttonSecondary}>
-                <BarChart3 size={16} />
-                Ver reportes
-              </Link>
             </div>
           </div>
-          <div className="hidden shrink-0 items-center justify-center rounded-2xl bg-brand-700/5 p-6 lg:flex">
-            {/* Placeholder para ilustración/logo del proyecto — reemplazar con imagen real */}
-            <div className="flex h-40 w-40 items-center justify-center rounded-full bg-white shadow-inner ring-1 ring-brand-100">
-              <HeartHandshake size={56} className="text-brand-600" />
-            </div>
+          <div className="relative hidden h-56 w-72 shrink-0 overflow-hidden rounded-2xl shadow-lg ring-4 ring-white lg:block">
+            <Image
+              src="/hero-comunidad.jpeg"
+              alt="Comunidad del proyecto URABÁ-PAÍS participando en una actividad de integración"
+              fill
+              className="object-cover"
+              priority
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-brand-900/40 via-transparent to-transparent" />
           </div>
         </div>
       </section>

@@ -150,7 +150,7 @@ export default async function BeneficiariosPage({
                   <td className="px-4 py-3 text-right">
                     <Link
                       href={`/beneficiarios/${b.id}`}
-                      className="inline-flex items-center gap-1 text-sm font-medium text-brand-800 hover:underline"
+                      className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-brand-800 shadow-sm transition hover:border-brand-300 hover:bg-brand-50 hover:shadow"
                     >
                       Ver ficha <ArrowRight size={14} />
                     </Link>

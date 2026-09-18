@@ -13,11 +13,19 @@ export type CoincidenciaDifusa = {
   score: number;
 };
 
+export type ToastAviso = {
+  tipo: "error" | "warning";
+  mensaje: string;
+  duplicadoId?: string;
+};
+
 export type ActionState = {
   error?: string;
   duplicadoId?: string;
   participacionEditarHref?: string;
   coincidenciasDifusas?: CoincidenciaDifusa[];
+  fieldErrors?: Record<string, string>;
+  toast?: ToastAviso;
 };
 
 const UMBRAL_COINCIDENCIA_DIFUSA = 0.4;
@@ -112,48 +120,62 @@ export async function crearBeneficiario(
   const familiarNombres = formData.getAll("familiarNombres").map((v) => String(v).trim());
   const familiarParentescos = formData.getAll("familiarParentescos").map((v) => String(v).trim());
 
+  const fieldErrors: Record<string, string> = {};
+
   if (!NOMBRE_PATTERN.test(nombres)) {
-    return { error: "El nombre es obligatorio: solo letras y espacios, entre 2 y 100 caracteres." };
+    fieldErrors.nombres = "Solo letras y espacios, entre 2 y 100 caracteres.";
   }
   if (!autorizacionDatos) {
-    return {
-      error: "Debes registrar la autorización para el tratamiento de datos antes de continuar.",
-    };
+    fieldErrors.autorizacionDatos = "Debes registrar la autorización para el tratamiento de datos.";
   }
   if ((tipoDocumento && !numeroDocumento) || (!tipoDocumento && numeroDocumento)) {
-    return { error: "Si registras un documento, indica tanto el tipo como el número." };
-  }
-  if (numeroDocumento && !DOCUMENTO_PATTERN.test(numeroDocumento)) {
-    return { error: "El número de documento debe ser alfanumérico, entre 4 y 15 caracteres." };
+    fieldErrors.numeroDocumento = "Si registras un documento, indica tanto el tipo como el número.";
+  } else if (numeroDocumento && !DOCUMENTO_PATTERN.test(numeroDocumento)) {
+    fieldErrors.numeroDocumento = "Debe ser alfanumérico (se permite guion), entre 4 y 15 caracteres.";
   }
   if (telefono && !TELEFONO_PATTERN.test(telefono)) {
-    return { error: "El teléfono debe tener entre 7 y 15 dígitos." };
+    fieldErrors.telefono = "Debe tener entre 7 y 15 dígitos.";
   }
   if (!municipio) {
-    return { error: "El municipio es obligatorio." };
+    fieldErrors.municipio = "El municipio es obligatorio.";
   }
   if (!genero) {
-    return { error: "Selecciona una opción de género (puede ser \"Prefiere no decir\")." };
+    fieldErrors.genero = 'Selecciona una opción (puede ser "Prefiere no decir").';
   }
   if (!Object.values(TipoPoblacion).includes(tipoPoblacionRaw as TipoPoblacion)) {
-    return { error: "Selecciona el tipo de población." };
+    fieldErrors.tipoPoblacion = "Selecciona el tipo de población.";
   }
   if (!fechaNacimiento && !edadAproximada) {
-    return { error: "Indica la fecha de nacimiento o, si no se conoce, una edad aproximada." };
-  }
-  if (fechaNacimiento && (esFechaFutura(fechaNacimiento) || edadEnAnios(fechaNacimiento) > 120)) {
-    return { error: "La fecha de nacimiento no es válida." };
-  }
-  if (edadAproximada !== null && (!Number.isInteger(edadAproximada) || edadAproximada < 0 || edadAproximada > 120)) {
-    return { error: "La edad aproximada debe ser un número entre 0 y 120." };
+    fieldErrors.fechaNacimiento = "Indica la fecha de nacimiento o una edad aproximada.";
+  } else if (fechaNacimiento && (esFechaFutura(fechaNacimiento) || edadEnAnios(fechaNacimiento) > 120)) {
+    fieldErrors.fechaNacimiento = "La fecha de nacimiento no es válida.";
+  } else if (
+    edadAproximada !== null &&
+    (!Number.isInteger(edadAproximada) || edadAproximada < 0 || edadAproximada > 120)
+  ) {
+    fieldErrors.edadAproximada = "Debe ser un número entre 0 y 120.";
   }
   if (discapacidad && !tipoDiscapacidad) {
-    return { error: "Indica qué tipo de discapacidad tiene la persona." };
+    fieldErrors.tipoDiscapacidad = "Indica qué tipo de discapacidad tiene la persona.";
   }
-  for (const nombre of familiarNombres) {
+
+  // El núcleo familiar ahora es obligatorio: al menos un integrante con
+  // nombre y parentesco (decisión de este cierre de fase).
+  const primerFamiliarNombre = familiarNombres[0] ?? "";
+  const primerFamiliarParentesco = familiarParentescos[0] ?? "";
+  if (!primerFamiliarNombre || !primerFamiliarParentesco) {
+    fieldErrors.familiar = "Debe registrar al menos un integrante familiar con nombre y parentesco.";
+  } else if (!NOMBRE_PATTERN.test(primerFamiliarNombre)) {
+    fieldErrors.familiar = "El nombre del familiar no es válido (solo letras y espacios).";
+  }
+  for (const nombre of familiarNombres.slice(1)) {
     if (nombre && !NOMBRE_PATTERN.test(nombre)) {
-      return { error: "El nombre de un familiar no es válido (solo letras y espacios)." };
+      fieldErrors.familiar = "El nombre de un familiar no es válido (solo letras y espacios).";
     }
+  }
+
+  if (Object.keys(fieldErrors).length > 0) {
+    return { fieldErrors };
   }
 
   if (tipoDocumento && numeroDocumento) {
@@ -163,8 +185,11 @@ export async function crearBeneficiario(
     });
     if (existente) {
       return {
-        error: `Ya existe una persona registrada con este tipo y número de documento: ${existente.nombres} (${existente.codigoInterno}).`,
-        duplicadoId: existente.id,
+        toast: {
+          tipo: "warning",
+          mensaje: `Ya existe una persona registrada con este documento: ${existente.nombres} (${existente.codigoInterno}).`,
+          duplicadoId: existente.id,
+        },
       };
     }
   }
@@ -392,4 +417,59 @@ export async function registrarSeguimiento(_prevState: ActionState, formData: Fo
 
   revalidatePath(`/beneficiarios/${beneficiarioId}`);
   redirect(`/beneficiarios/${beneficiarioId}`);
+}
+
+export async function actualizarSeguimiento(_prevState: ActionState, formData: FormData): Promise<ActionState> {
+  const seguimientoId = String(formData.get("seguimientoId") ?? "");
+  const beneficiarioId = String(formData.get("beneficiarioId") ?? "");
+  const avanceNovedad = String(formData.get("avanceNovedad") ?? "").trim();
+  const observacion = String(formData.get("observacion") ?? "").trim() || null;
+  const accionPendiente = String(formData.get("accionPendiente") ?? "").trim() || null;
+  const proximoContacto = parseFecha(formData.get("proximoContacto"));
+  const fecha = parseFecha(formData.get("fecha")) ?? new Date();
+
+  if (!seguimientoId || !beneficiarioId) return { error: "Seguimiento inválido." };
+  if (avanceNovedad.length < 3) {
+    return { error: "Describe el avance o la novedad (mínimo 3 caracteres)." };
+  }
+  if (esFechaFutura(fecha)) return { error: "La fecha del seguimiento no puede ser en el futuro." };
+  if (accionPendiente && !proximoContacto) {
+    return { error: "Si hay una acción pendiente, indica la fecha de próximo contacto." };
+  }
+  if (proximoContacto) {
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0);
+    if (proximoContacto.getTime() < hoy.getTime()) {
+      return { error: "El próximo contacto debe ser hoy o en una fecha futura." };
+    }
+  }
+
+  await prisma.seguimiento.update({
+    where: { id: seguimientoId },
+    data: { avanceNovedad, observacion, accionPendiente, proximoContacto, fecha },
+  });
+
+  revalidatePath(`/beneficiarios/${beneficiarioId}`);
+  redirect(`/beneficiarios/${beneficiarioId}`);
+}
+
+/**
+ * "Finalizar" un seguimiento no agrega un campo de estado nuevo al schema:
+ * reutiliza la misma semántica que ya usan los indicadores y la ficha
+ * (accionPendiente/proximoContacto en null = sin pendiente).
+ */
+export async function finalizarSeguimiento(formData: FormData): Promise<void> {
+  const seguimientoId = String(formData.get("seguimientoId") ?? "");
+  const beneficiarioId = String(formData.get("beneficiarioId") ?? "");
+  if (!seguimientoId || !beneficiarioId) return;
+
+  await prisma.seguimiento.update({
+    where: { id: seguimientoId },
+    data: { accionPendiente: null, proximoContacto: null },
+  });
+
+  // Sin redirect(): la ruta que invoca esta acción (ficha, lista o edición
+  // de seguimientos) se refresca in situ tras la mutación.
+  revalidatePath(`/beneficiarios/${beneficiarioId}`);
+  revalidatePath(`/beneficiarios/${beneficiarioId}/seguimientos`);
 }
